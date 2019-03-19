@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Emacs on Core Dumped</title>
+    <link>http://troyhinckley.com/categories/emacs/</link>
+    <description>Recent content in Emacs on Core Dumped</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Fri, 08 Feb 2019 00:00:00 -0800</lastBuildDate>
+    
+	<atom:link href="http://troyhinckley.com/categories/emacs/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Using org mode to write email for outlook</title>
+      <link>http://troyhinckley.com/posts/outlook-email-in-org-mode/</link>
+      <pubDate>Fri, 08 Feb 2019 00:00:00 -0800</pubDate>
+      
+      <guid>http://troyhinckley.com/posts/outlook-email-in-org-mode/</guid>
+      <description>I see many threads on Reddit and blog posts about using email inside
+Emacs. I mean, I already have org-mode which organizing my whole
+digital life. But then all my work email is provided through outlook,
+which does not allow me to fetch email with anything other then their
+proprietary software.
+Microsoft outlooked was designed to be used by people writing
+marketing emails, not people talking about code. There is no way to</description>
+    </item>
+    
+  </channel>
+</rss>

@@ -1,0 +1,11 @@
+baseURL = "http://troyhinckley.com"
+languageCode = "en-us"
+title = "Core Dumped"
+pygmentsCodeFences = "true"
+theme = "m10c"
+
+[params]
+        description = "A core dump of ideas and projects from my brain."
+        author = "Troy Hinckley"
+
+
