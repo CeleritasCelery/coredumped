@@ -1,11 +1,21 @@
 baseURL = "https://coredumped.dev"
 languageCode = "en-us"
 title = "Core Dumped"
-pygmentsCodeFences = "true"
-theme = "m10c"
+theme = "hyde-y"
+metaDataFormat = "yaml"
+copyright = "(c) 2015 Troy Hinckley."
+
+[permalinks]
+    post = "/:year/:month/:day/:slug/"
+    code = "/:slug/"
 
 [params]
-        description = "A core dump of ideas and projects from my brain."
+        description = "A core dump of ideas and projects"
         author = "Troy Hinckley"
+        sidebar = "left"
+        home = "home"
+        topline = "A core dump of ideas and projects"
 
-
+[author]
+    name = "Troy Hinckley"
+    email = "troy.hinckley@gmail.com"
