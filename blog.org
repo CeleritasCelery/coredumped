@@ -296,8 +296,57 @@ takes the last paste normalizes it to be ascii compatible.
       (apply #'normalize-text (cl-sort (list (point) (mark t)) '<))))
 #+END_SRC
 
-***** inline source code highlighting
-you can include inline code using something like this
-#+BEGIN_SRC org -n
-src_xml[:exports code]{<tag>text</tag>}
-#+END_SRC
+*** TODO [#B] compilation mode on steroids
+=compile.el= is a built-in package for Emacs that Let's you run
+compilations in special dedicated mode. For example, if we wanted to
+run make on a project, we would call ~M-x compile~ and it would
+display a command prompt which conveniently defaults to "make -k". We
+could use to run other commands as well, such as ~g++~, ~go~, or
+~javac~. Basically anything that you can run from the command line,
+you can run in compile mode.
+
+Once you launch the command, compile opens a new popup window that
+shows the commands progress. It actively scans for errors using a
+builtin list and reports the total error count in the mode line. At
+any time you can navigate to an error and use ="RET"= to jump to the
+file. It works great with almost no configuration for the majority of
+cases.
+
+My builds, however, are more complicated. I use a proprietary set of
+build tools that might run for over 10 hours. None of the standard
+error parsing regex applied to me. Since my builds take so long, I
+would often have up to a dozen builds running at once. There are also
+several different types of builds that need to run particular order,
+assuming the previous stage passed. On top of that, some of the builds
+would stall and wait for user input forever. The compilation system as
+it currently stands required too much micro management and was not
+powerful enough to support my workflow. So for a long time, I managed
+all my builds from command line, But this was also a very slow
+workflow. So I decided to investigate what compile.el could do for me.
+Eventually I was able to create a workflow with smart command
+dispatching, command queuing, and a compilation status popup.
+
+Before I get started let me just say that since all my build commands
+are proprietary, There is little value in showing the actual arguments
+and commands used. I think that would just create additional noise
+anyway, so I am replacing all of that with sudo code. It should make
+it easier to adapt this workflow to your needs.
+
+**** dispatching commands
+     My first issue was that I was frequently changing the commands
+     line arguments. This would require me to
+
+**** error parsing
+
+**** detecting stalls
+
+**** the command queue
+
+**** alerts when a command finishes
+
+**** the status window
+
+**** log file mode
+
+*** TODO [#B] just do it
+Just start the task you don't know anything about, and you will be almost done
