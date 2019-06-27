@@ -1,0 +1,4 @@
+[posts]
+    Name = "Posts"
+    Title = "Show list of posts"
+    URL = "/post"
