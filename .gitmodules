@@ -6,4 +6,4 @@
 	url = https://github.com/vaga/hugo-theme-m10c.git
 [submodule "hyde-y"]
 	path = themes/hyde-y
-	url = https://github.com/enten/hyde-y
+	url = https://github.com/CeleritasCelery/hyde-y.git
