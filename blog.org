@@ -263,7 +263,6 @@ two differences
       Set objApp = Nothing
   End Function
 #+END_SRC
-
 ***** Normalize outlook formatting
 Unless you disable it, outlook will try and "prettify" some characters
 as you type with non ascii-compatible versions. This means that you
@@ -331,6 +330,11 @@ out all possible completions. But not bash. Try this code and you get nothing.
 #+BEGIN_SRC lisp
 (comint-simple-send (get-buffer-process (current-buffer)) "git\t\x15")
 #+END_SRC
+
+This is a test
+#+begin_src emacs-lisp
+(message "Hello again x2")
+#+end_src
 
 It works in the terminal but not in the Emacs shell. What conspiracy is this?
 Turns out that Emacs and bash have put a lot of effort into making sure
@@ -454,3 +458,76 @@ it easier to adapt this workflow to your needs.
 
 *** TODO [#B] just do it
 Just start the task you don't know anything about, and you will be almost done
+
+*** TODO [#B] Emacs in 10 years
+Emacs is the editor of a lifetime. It has been around more then 40 years, and I hope it will be around another 40. There are so many editors that come in with new tech and fancy features, but within a decade or two. But I hopefully will be able to use Emacs for the rest of my life. The editor is always adapting and changing. Here I put down some of my thoughts on what I hope the future of Emacs holds, and also what I hope it does not.
+**** GUI first, Terminal second
+Like many old applications, Emacs started in the terminal and that is where it takes it roots. This was the only option before the advent of GUI's. And even after graphical interfaces became popular there were still so many advantages to running in a simple terminal environment. But times have changed and there are now many advantges to using Emacs as GUI.  There is a popular [[https://blog.aaronbieber.com/2016/12/29/don-t-use-terminal-emacs.html][article]] by Aaron Bieber that explains some of the reasons, so I won't reiterate those here. But I hope the future of Emacs is focused on GUI first, Terimal second. You can already see this happening with things like Harbuff and better ~pixel-scroll-mode~ support being added to Emacs 27.
+***** scrolling and cursor stays put
+Scrolling in Emacs has always felt awkward compared to what you would get in a normal gui application. For one thing, you cannot scroll a window without also moving the cursor. And there is no easy way to get the cursor back unless you remembered to set a mark first. This need not be.
+
+***** draw a window anywhere
+If you want to do a fully stylized popup you need to either use an overlay or a child frame. Overlays have the limitation that they cannot cross window boundaries and only work with monospaced fonts. Using frames means you popup is dependent on your window manager. For me this means that every time I show or hide a child frame it flashes white before it redraws, leading to a very jarring experience. Emacs should be able to draw a floating window anywhere in the frame that can be used to tool-tips, completion, or anything else.
+***** give me back my keys!
+For historical reasons, terminals treat many different keybindings as the same. For example in a terminal emulator =C-j= and =C-m= are  =<return>=, =C-i= is =<tab>=, =C-[= is ~<esc>~, etc. Emacs carries these same terminal mappings into the GUI, even though the GUI can distinguish these keys. Fixing this requires some [[https://emacs.stackexchange.com/questions/220/how-to-bind-c-i-as-different-from-tab/221#221][voodoo]] with ~input-decode-map~. The GUI version of emacs should distinguish these keys, but for compatibility they could be bound to the same function by default. But that makes it easy for users to rebind them if needed.
+**** Better buffer model
+***** Long lines
+A common pain point with Emacs is handling files with long lines. There is a [[https://www.emacswiki.org/emacs/SoLong][new package]] in Emacs 27 that will check for long lines in a file and disable features if they are over a certain length. But this still does not get to the heart of the problem. There is a whole [[https://github.com/codygman/figure-out-emacs-long-lines-issue/blob/master/figuring-out-emacs-display-issues.org][github repo]] dedicated to trying to solve this issue. However it looks like it would need a complete rework of the Emacs buffer model.
+***** Code folding
+If you try and fold more then a few thousand lines Emacs will slow to a crawl. Vim and sublime can handle this fine, and many users of those editors will enable folding by default. But in Emacs that is a time bomb waiting to happen. This seems related to the work Emacs has to do every time you move the cursor. I have never been able to find a mode (including ~set-selective-display~) That is performant on large files. And large files it where you need folding the most.
+**** modern runtime
+***** jit compiler
+There have been several attempts to create a JIT compiler for Emacs with the most [[https://lists.gnu.org/archive/html/emacs-devel/2018-08/msg00393.html][recent]] one being back in 2018. JIT stands for "Just in Time" compiler that will interprent new code straight byte-code. Currently byte code is only created if you explicityly byte-compile a function or file. This is a feature of many modern dynamic languages and could greatly improve the performance of evaluated elips code.
+***** byte code optimization
+Steve Yegge has a very interesting talk entitled [[http://steve-yegge.blogspot.com/2008/05/dynamic-languages-strike-back.html][Dynamic Languages Strike Back]] where he outlines some of the interesting advantages dynamic languages have over static ones. This advantage comes down to dynamic languages having a runtime process that optimize things on the fly, whereas a static language has to know everything at compile time. For example There is the concept of Trace Trees, where the runtime examines "hotspots" in the code and applies heavy optmiization to the most executed branches of that. This includes things like inlining function calls, tail call optimization, and caching values. There are a lot of really cool things that can happen with runtime environement like emacs.
+Trace trees, tail call, string interning, inlining
+fib(40) in python : 34
+fib(40) in emacs : 131
+fib(40) in c: 0.6 seconds
+almost 4x worse performace
+***** not stop-the-world GC
+GC is a huge part of the total cost
+
+53 seconds of GC.
+13261 collections
+40% of it is GC
+***** make sure not to loose introspection
+
+***** reader macros
+
+http://xkcd.com/1638/
+
+="\\`\\\\\\(\\(a\\|b\\|c\\)\\(d\\|e\\)\\\\)\\'"=
+=r"\`\\((a|b|c)(d|e)\)\'"=
+
+="\\(\\`\\|[^\\]\\)\\(\\\\\\\\\\)*\\(\\\\\\?\\)\\'"=
+=r"(\`|[^\])(\\\\\)*(\\\?)\'"=
+
+***** move c code to elisp
+Example of line numbers
+
+**** What I hope the future does not hold
+
+***** concurency
+Leads to sloppy code
+there is a lot of headroom on in the single threaded space.
+Maybe limit it to font locking and buffer refresh
+
+***** first class extension languages
+Vim and neovim can do this.
+
+Those languages will fade. Emacs is the editor of a life time, it needs to stick around. And be comptaible long after those languages are gone.
+
+no brow
+
+*****  browser in emacs
+**** conclusion
+Make sure that you praise it. Excited.
+
+=C-c C-f=
+*** TODO [#B] Thoughts on Garbage collection in Emacs
+What could we do with a generational garbage collector?
+Be cool to create some graphs
+*** TODO [#B] Trace trees
+Explain what trace trees are and why they are so cool
+*** TODO [#B] Please Apple, Give me control of my photos.

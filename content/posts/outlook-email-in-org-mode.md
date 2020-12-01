@@ -14,17 +14,17 @@ proprietary software.
 
 Microsoft outlooked was designed to be used by people writing  
 marketing emails, not people talking about code. There is no way to  
-distinguish what is code from what is text, or call our programmign  
+distinguish what is code from what is text, or call our programming  
 symbols from the rest of the prose. Emacs `org-mode` on the other  
-hand, was built for working in a techincal environment.  
+hand, was built for working in a technical environment.  
 
-Thankfully org makes it easy to export any set of text html. The hard  
+Thankfully org makes it easy to export any heading to HTML. The hard  
 part is getting that HTML into outlook. Most of the ideas presented  
 here were taken this [post](http://bnbeckwith.com/blog/org-mode-to-outlook.html), and then expanded on.  
 
-This is the process I use to write my email with org-mode:  
+The process I use to write my email with `org-mode` is as follows  
 
-1.  write the email in a org capture buffer
+1.  write the email in an org capture buffer
 2.  Use a custom function to copy the exported HTML to the clipboard
 3.  go to outlook and use a custom VBA function to insert the HTML from  
     the clipboard as formatted text
@@ -37,61 +37,44 @@ This is the process I use to write my email with org-mode:
 
 Using an org capture buffer is perfect for writing email, because I  
 can save it as a draft if needed, or export the contents and then  
-throw the buffer away. Also, most of the time the content of intreset  
+throw the buffer away. Also, most of the time, the content of interest  
 is what I am working on that moment, so I have everything at hand.  
-Here is the simple template that I use to create emails from the  
-capture file.  
+Here is the simple template that I use to write emails.  
 
-{{< highlight emacs-lisp "linenos=table, linenostart=1" >}}
-(add-to-list 'org-capture-templates
-             '("e" "Email" entry (expand-file-name "email.org" org-directory)
-               "* %?" :empty-lines 1))
-{{< /highlight >}}
+```nillangnilswitchesnilflags
+nilbody
+```
 
 
 ### Exporting from org-mode {#exporting-from-org-mode}
 
 Normally if you wanted to export an org header as HTML, you would use  
 `C-c C-e` to open the export menu. `hH` will open a dedicated buffer  
-with the HTML contents of your org file. from there you can copy the  
+with the HTML contents of your org file. From there you can copy the  
 whole buffer. However I find it much faster to use this helper  
 function (bound to `C-x M-e`).  
 
-{{< highlight emacs-lisp "linenos=table, linenostart=4" >}}
-(defun export-org-email ()
-  "Export the current org email and copy it to the clipboard"
-  (interactive)
-  (let ((org-export-show-temporary-export-buffer nil)
-        (org-html-head (org-email-html-head)))
-    (org-html-export-as-html)
-    (with-current-buffer "*Org HTML Export*"
-      (kill-new (buffer-string)))
-    (message "HTML copied to clipboard")))
-{{< /highlight >}}
+```nillangnilswitchesnilflags
+nilbody
+```
 
 
 ### Better CSS for export {#better-css-for-export}
 
 The default HTML exported by org is spartan to say the least.  
-Thankfully it is pretty easy to define some custom to CSS that make  
-things look prettier and play nicer with outlooks HTML rendering  
-engine. The outlook compatible HTML I use is located [here](https://github.com/CeleritasCelery/org-html-themes/blob/master/styles/email/css/email.css). The  
-function below adds my CSS to `org-html-head`. It is called by  
-`export-org-email` from the previous section.  
+Thankfully it is pretty easy to define some custom to CSS that looks  
+prettier and plays nicer with outlooks HTML rendering engine. The  
+outlook compatible HTML I use is located [here](https://github.com/CeleritasCelery/org-html-themes/blob/master/styles/email/css/email.css). The function below adds  
+my CSS to `org-html-head`. It is called by `export-org-email` from the  
+previous section.  
 
-{{< highlight emacs-lisp "linenos=table, linenostart=13" >}}
-(defun org-email-html-head ()
-  "Create the header with CSS for use with email"
-  (concat
-   "<style type=\"text/css\">\n"
-   "<!--/*--><![CDATA[/*><!--*/\n"
-   (with-temp-buffer
-     (insert-file-contents
-      "~/org/org-html-themes/styles/email/css/email.css")
-     (buffer-string))
-   "/*]]>*/-->\n"
-   "</style>\n"))
-{{< /highlight >}}
+ As you can see in the function below, I have this CSS at the local  
+path `~/org/org-html-themes/styles/email/css/email.css`. You will need  
+to change this to where ever you keep the CSS file.  
+
+```nillangnilswitchesnilflags
+nilbody
+```
 
 
 ## setting up outlook {#setting-up-outlook}
@@ -107,7 +90,7 @@ To add a function to outlook
 
 1.  Press `Alt-F11` to bring up the VBA editor.
 2.  You should see the default project. Change this project name to  
-    something more apporopriate. Note that the Project name **MUST NOT**  
+    something more appropriate. Note that the Project name **MUST NOT**  
     be the name of the function (`PrependClipboardHTML`) so name it  
     something else.
 3.  Right click on the project to add a new module and copy in the  
@@ -283,41 +266,11 @@ End Function
 ### Normalize outlook formatting {#normalize-outlook-formatting}
 
 Unless you disable it, outlook will try and "prettify" some characters  
-as you type with non ascii compatible versions. This means that you  
+as you type with non ascii-compatible versions. This means that you  
 will often encounter errors when copying code out of outlook and  
 trying to paste into a shell or source file. The following function  
 takes the last paste normalizes it to be ascii compatible.  
 
-{{< highlight emacs-lisp "linenos=table, linenostart=1" >}}
-(defun normalize-text (beg end)
-  "normalize characters used in Microsoft formatting"
-  (let* ((orig-text (buffer-substring beg end))
-         (normalized-text
-          (thread-last orig-text
-            (replace-regexp-in-string "–" "--")
-            (replace-regexp-in-string (rx (char "‘’")) "'")
-            (replace-regexp-in-string (rx (char "“”")) "\""))))
-    (unless (equal orig-text normalized-text)
-      (save-excursion
-        (goto-char beg)
-        (delete-region beg end)
-        (insert normalized-text)))))
-
-(defun normalize-region (beg end)
-  "normalzie the last paste, or if region is selected, normalize
-that region."
-  (interactive "r")
-  (if (region-active-p)
-      (progn (normalize-text beg end)
-             (deactivate-mark))
-    (apply #'normalize-text (cl-sort (list (point) (mark t)) '<))))
-{{< /highlight >}}
-
-
-### inline source code highlighting {#inline-source-code-highlighting}
-
-you can include inline code using something like this  
-
-{{< highlight org "linenos=table, linenostart=1" >}}
-src_xml[:exports code]{<tag>text</tag>}
-{{< /highlight >}}
+```nillangnilswitchesnilflags
+nilbody
+```
