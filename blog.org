@@ -4,7 +4,7 @@
 
 * Posts
   :PROPERTIES:
-  :EXPORT_HUGO_SECTION: posts
+  :EXPORT_HUGO_SECTION: post
   :END:
 
 ** emacs :@emacs:
@@ -14,21 +14,11 @@
 :EXPORT_DATE: 2019-02-08
 :EXPORT_FILE_NAME: outlook-email-in-org-mode
 :END:
-I see many threads on Reddit and blog posts about using email inside
-Emacs. I mean, I already have =org-mode= which organizing my whole
-digital life. But then all my work email is provided through outlook,
-which does not allow me to fetch email with anything other then their
-proprietary software.
+I see many threads on Reddit and blog posts about using email inside Emacs. I mean, I already have =org-mode= which organizing my whole digital life. But then all my work email is provided through outlook, which does not allow me to fetch email with anything other then their proprietary software.
 
-Microsoft outlooked was designed to be used by people writing
-marketing emails, not people talking about code. There is no way to
-distinguish what is code from what is text, or call our programming
-symbols from the rest of the prose. Emacs =org-mode= on the other
-hand, was built for working in a technical environment.
+Microsoft outlooked was designed to be used by people writing marketing emails, not people talking about code. There is no way to distinguish what is code from what is text, or call our programming symbols from the rest of the prose. Emacs =org-mode= on the other hand, was built for working in a technical environment.
 
-Thankfully org makes it easy to export any heading to HTML. The hard
-part is getting that HTML into outlook. Most of the ideas presented
-here were taken this [[http://bnbeckwith.com/blog/org-mode-to-outlook.html][post]], and then expanded on.
+Thankfully org makes it easy to export any heading to HTML. The hard part is getting that HTML into outlook. Most of the ideas presented here were taken this [[http://bnbeckwith.com/blog/org-mode-to-outlook.html][post]], and then expanded on.
 
 The process I use to write my email with =org-mode= is as follows
 1. write the email in an org capture buffer
@@ -38,11 +28,7 @@ The process I use to write my email with =org-mode= is as follows
 
 **** Setting up Emacs
 ***** Using an org capture buffer
-Using an org capture buffer is perfect for writing email, because I
-can save it as a draft if needed, or export the contents and then
-throw the buffer away. Also, most of the time, the content of interest
-is what I am working on that moment, so I have everything at hand.
-Here is the simple template that I use to write emails.
+Using an org capture buffer is perfect for writing email, because I can save it as a draft if needed, or export the contents and then throw the buffer away. Also, most of the time, the content of interest is what I am working on that moment, so I have everything at hand. Here is the simple template that I use to write emails.
 #+BEGIN_SRC emacs-lisp -n
 (add-to-list 'org-capture-templates
              '("e" "Email" entry (expand-file-name "email.org" org-directory)
@@ -50,11 +36,7 @@ Here is the simple template that I use to write emails.
 #+END_SRC
 
 ***** Exporting from org-mode
-Normally if you wanted to export an org header as HTML, you would use
-=C-c C-e= to open the export menu. =hH= will open a dedicated buffer
-with the HTML contents of your org file. From there you can copy the
-whole buffer. However I find it much faster to use this helper
-function (bound to =C-x M-e=).
+Normally if you wanted to export an org header as HTML, you would use =C-c C-e= to open the export menu. =hH= will open a dedicated buffer with the HTML contents of your org file. From there you can copy the whole buffer. However I find it much faster to use this helper function (bound to =C-x M-e=).
 
 #+BEGIN_SRC emacs-lisp +n
   (defun export-org-email ()
@@ -69,16 +51,9 @@ function (bound to =C-x M-e=).
 #+END_SRC
 
 ***** Better CSS for export
-The default HTML exported by org is spartan to say the least.
-Thankfully it is pretty easy to define some custom to CSS that looks
-prettier and plays nicer with outlooks HTML rendering engine. The
-outlook compatible HTML I use is located [[https://github.com/CeleritasCelery/org-html-themes/blob/master/styles/email/css/email.css][here]]. The function below adds
-my CSS to =org-html-head=. It is called by =export-org-email= from the
-previous section.
+The default HTML exported by org is spartan to say the least. Thankfully it is pretty easy to define some custom to CSS that looks prettier and plays nicer with outlooks HTML rendering engine. The outlook compatible HTML I use is located [[https://github.com/CeleritasCelery/org-html-themes/blob/master/styles/email/css/email.css][here]]. The function below adds my CSS to =org-html-head=. It is called by =export-org-email= from the previous section.
 
- As you can see in the function below, I have this CSS at the local
-path =~/org/org-html-themes/styles/email/css/email.css=. You will need
-to change this to where ever you keep the CSS file.
+As you can see in the function below, I have this CSS at the local path =~/org/org-html-themes/styles/email/css/email.css=. You will need to change this to where ever you keep the CSS file.
 #+BEGIN_SRC emacs-lisp +n
   (defun org-email-html-head ()
     "Create the header with CSS for use with email"
@@ -95,18 +70,12 @@ to change this to where ever you keep the CSS file.
 
 **** setting up outlook
 ***** Getting the HTML into outlook
-This is the tricky part. outlook does not make it easy to insert HTML
-inline. I had to learn some VBA and use the outlook code editor. I
-hope I never have to do that again.
+This is the tricky part. outlook does not make it easy to insert HTML inline. I had to learn some VBA and use the outlook code editor. I hope I never have to do that again.
 
 To add a function to outlook
 1. Press =Alt-F11= to bring up the VBA editor.
-2. You should see the default project. Change this project name to
-   something more appropriate. Note that the Project name *MUST NOT*
-   be the name of the function (~PrependClipboardHTML~) so name it
-   something else.
-3. Right click on the project to add a new module and copy in the
-   function from below
+2. You should see the default project. Change this project name to something more appropriate. Note that the Project name *MUST NOT* be the name of the function (~PrependClipboardHTML~) so name it something else.
+3. Right click on the project to add a new module and copy in the function from below
 
 #+BEGIN_SRC cs -n
 Sub PrependClipboardHTML()
@@ -125,9 +94,7 @@ End Sub
 #+END_SRC
 
 ***** Fix object library
-This step may not apply to everyone, but in order to get this to work,
-I also had to add the =Microsoft Forms 2.0 Object Library= to the
-References. I figured this out by looking at [[https://www.reddit.com/r/orgmode/comments/74k2mx/org_link_to_message_within_outlook_2016/][this]] Reddit thread.
+This step may not apply to everyone, but in order to get this to work, I also had to add the =Microsoft Forms 2.0 Object Library= to the References. I figured this out by looking at [[https://www.reddit.com/r/orgmode/comments/74k2mx/org_link_to_message_within_outlook_2016/][this]] Reddit thread.
 
 1. Click on =Tools= in the menu bar (or use =Alt-t=).
 2. Select =References...=
@@ -135,40 +102,26 @@ References. I figured this out by looking at [[https://www.reddit.com/r/orgmode/
 4. Browse to =C:\Windows\System32\FM20.DLL= and select open
 
 ***** Add to Quick Access Toolbar
-This function only makes sense in context of an email. To enable it
-there, add it to the quick access toolbar at the top.
+This function only makes sense in context of an email. To enable it there, add it to the quick access toolbar at the top.
 
 1. Press =Ctrl-n= to open up a new email.
-2. Select the little down arrow at the very top for the =Customize
-   Quick Access Toolbar= menu.
+2. Select the little down arrow at the very top for the =Customize Quick Access Toolbar= menu.
 3. Select =More Commands=.
-4. In the drop down for =choose commands from:= select =Macros=. You
-   should see the =PrependClipboardHTML= macro you created here.
+4. In the drop down for =choose commands from:= select =Macros=. You should see the =PrependClipboardHTML= macro you created here.
 5. Add it to the right hand side pane with the =Add >>= button.
-6. Click on =Modify...= to change the icon and display name. You can
-   also use the arrow to change the ordering in the =Quick Access
-   Toolbar=
+6. Click on =Modify...= to change the icon and display name. You can also use the arrow to change the ordering in the =Quick Access Toolbar=
 
-Now clicking on that button will copy clipboard contents into the
-email as HTML. Our raw HTML exported from Org mode gets inserted
-nicely and we gain the formatting desired.
+Now clicking on that button will copy clipboard contents into the email as HTML. Our raw HTML exported from Org mode gets inserted nicely and we gain the formatting desired.
 
-The other bonus (or maybe the main point) is that now you can also use
-a built-in shorcut for the Quick Access Toolbar commands to run this
-one. By pressing =Alt=, you can see a number by your command.
+The other bonus (or maybe the main point) is that now you can also use a built-in shorcut for the Quick Access Toolbar commands to run this one. By pressing =Alt=, you can see a number by your command.
 
 ***** Matching the default font in Outlook
-It is nice sometimes to have the default font in outlook match what
-you are exporting from org mode. To make this happen, do the following
-steps in Outlook.
+It is nice sometimes to have the default font in outlook match what you are exporting from org mode. To make this happen, do the following steps in Outlook.
 
 1. On the =File= tab, choose =Options= > =Mail=.
 2. Under =Compose messages=, choose =Stationery and Fonts=.
-3. On the =Personal Stationery= tab, under =New mail messages= or
-   =Replying or forwarding messages=, choose Font.
-4. In the =Font= box, choose the font, style, size, and color that you
-   want to use. You can see a preview of your changes as you make
-   them.
+3. On the =Personal Stationery= tab, under =New mail messages= or =Replying or forwarding messages=, choose Font.
+4. In the =Font= box, choose the font, style, size, and color that you want to use. You can see a preview of your changes as you make them.
 5. Choose =OK= three times to return to Outlook.
 
 **** Bonus Content
@@ -176,15 +129,10 @@ Here are a few more ideas that are not necessary for this workflow but
 are useful to me.
 
 ***** More advanced VBA
-The =PrependClipboardHTML= function I showed above is not actually the
-version I use. But I chose to mention present it as the solution
-because it is simple and works well. This more advanced version has
-two differences
+The =PrependClipboardHTML= function I showed above is not actually the version I use. But I chose to mention present it as the solution because it is simple and works well. This more advanced version has two differences
 
 1. Works with inline email replies
-2. If the subject line is empty, the HTML header at the start of the
-   body is used as the subject line. This allows you add the subject
-   line in org-mode and have it automatcially inserted.
+2. If the subject line is empty, the HTML header at the start of the body is used as the subject line. This allows you add the subject line in org-mode and have it automatcially inserted.
 
 #+BEGIN_SRC cs -n
   Sub PrependClipboardHTML()
@@ -264,11 +212,7 @@ two differences
   End Function
 #+END_SRC
 ***** Normalize outlook formatting
-Unless you disable it, outlook will try and "prettify" some characters
-as you type with non ascii-compatible versions. This means that you
-will often encounter errors when copying code out of outlook and
-trying to paste into a shell or source file. The following function
-takes the last paste normalizes it to be ascii compatible.
+Unless you disable it, outlook will try and "prettify" some characters as you type with non ascii-compatible versions. This means that you will often encounter errors when copying code out of outlook and trying to paste into a shell or source file. The following function takes the last paste normalizes it to be ascii compatible.
 
 #+BEGIN_SRC emacs-lisp -n
   (defun normalize-text (beg end)
@@ -300,33 +244,14 @@ takes the last paste normalizes it to be ascii compatible.
 :EXPORT_DATE: 2020-01-04
 :EXPORT_FILE_NAME: native-shell-completion-in-emacs
 :END:
-I am obsessed with autocompletion in shell mode. Running a shell in ~shell-mode~
-instead of a terminal emulator has so many advantages. You can treat the whole
-buffer just like a normal Emacs buffer. You can copy and paste and edit the line
-normally. You can hook it into native Emacs functionality. You can even [[https://github.com/riscy/shx-for-emacs][display
-images!]]
+I am obsessed with autocompletion in shell mode. Running a shell in ~shell-mode~ instead of a terminal emulator has so many advantages. You can treat the whole buffer just like a normal Emacs buffer. You can copy and paste and edit the line normally. You can hook it into native Emacs functionality. You can even [[https://github.com/riscy/shx-for-emacs][display images!]]
 
-However there is one big disadvantage. You loose access to the state the shell.
-This means that you have to do tricks like ~shell-dirtrack-mode~ just to make sure
-you are in the right directory. It also means that all the native shell
-completions are not available. I have tried to approach this problem from
-multiple angles with packages like [[https://github.com/CeleritasCelery/company-fish][this]], [[https://github.com/CeleritasCelery/company-async-files][this]], and [[https://github.com/CeleritasCelery/company-arguments][this]]. (Yes, I have written a
-half dozen modes to try solve this.) The most popular package to try and solve
-this is [[https://github.com/szermatt/emacs-bash-completion][bash-shell-completion]]. However all these solutions have the same problem
-that they don't actually reflect the internal state of the shell, they are just
-close approximations.
+However there is one big disadvantage. You loose access to the state the shell. This means that you have to do tricks like ~shell-dirtrack-mode~ just to make sure you are in the right directory. It also means that all the native shell completions are not available. I have tried to approach this problem from multiple angles with packages like [[https://github.com/CeleritasCelery/company-fish][this]], [[https://github.com/CeleritasCelery/company-async-files][this]], and [[https://github.com/CeleritasCelery/company-arguments][this]]. (Yes, I have written a half dozen modes to try solve this.) The most popular package to try and solve this is [[https://github.com/szermatt/emacs-bash-completion][bash-shell-completion]]. However all these solutions have the same problem that they don't actually reflect the internal state of the shell, they are just close approximations.
 
-But the shell knows its own state. In a normal terminal emulator, tab completion
-will give you access to it. When looking at my shell buffer, it seems that the
-information I want is just below the surface. If only there was some way to
-access it. I am not the only one who has had this thought. There is a
-[[https://stackoverflow.com/questions/163591/bash-autocompletion-in-emacs-shell-mode][stackoverflow]] with over 26,000 views asking this same question. But no one has
-managed to access the native tab completion before. So I determined to solve
-this once and for all.
+But the shell knows its own state. In a normal terminal emulator, tab completion will give you access to it. When looking at my shell buffer, it seems that the information I want is just below the surface. If only there was some way to access it. I am not the only one who has had this thought. There is a [[https://stackoverflow.com/questions/163591/bash-autocompletion-in-emacs-shell-mode][stackoverflow]] with over 26,000 views asking this same question. But no one has managed to access the native tab completion before. So I determined to solve this once and for all.
 
 **** The curious case of bash
-If you use csh and send some text followed by the tab character, it will print
-out all possible completions. But not bash. Try this code and you get nothing.
+If you use csh and send some text followed by the tab character, it will print out all possible completions. But not bash. Try this code and you get nothing.
 #+BEGIN_SRC lisp
 (comint-simple-send (get-buffer-process (current-buffer)) "git\t\x15")
 #+END_SRC
@@ -336,19 +261,13 @@ This is a test
 (message "Hello again x2")
 #+end_src
 
-It works in the terminal but not in the Emacs shell. What conspiracy is this?
-Turns out that Emacs and bash have put a lot of effort into making sure
-completion does not work. The first thing to notice is that ~explicit-bash-args~
-contains the argument ~--no-editing~, which will disable readline completion. Let
-get rid of that shall we?
+It works in the terminal but not in the Emacs shell. What conspiracy is this? Turns out that Emacs and bash have put a lot of effort into making sure completion does not work. The first thing to notice is that ~explicit-bash-args~ contains the argument ~--no-editing~, which will disable readline completion. Let get rid of that shall we?
 #+BEGIN_SRC lisp
   (setq explicit-bash-args
             (delete "--noediting" explicit-bash-args))
 #+END_SRC
 
-However removing that still does not enable tab completion. There must be
-something else going on here. This time it is on the bash side. Looking in the
-source code we see the follow block.
+However removing that still does not enable tab completion. There must be something else going on here. This time it is on the bash side. Looking in the source code we see the follow block.
 #+BEGIN_SRC c
   term = get_string_value ("TERM");
   emacs = get_string_value ("EMACS");
@@ -373,13 +292,7 @@ source code we see the follow block.
   no_line_editing |= in_emacs && STREQ (term, "dumb");
 #+END_SRC
 
-For some reason that I can't explain, bash has special code for running inside
-Emacs. Lo and behold, if ~$TERM~ is ~dumb~ and ~$INSIDE_EMACS~ is set, then line
-editing is disabled by the shell itself. Any reason for this? I would love to
-know. Changing ~$TERM~ to something other then ~dumb~ fixes the issue, but then
-programs might not interpret our terminals capabilities correct. The best thing
-to do is remove the environment variable ~$INSIDE_EMACS~. Doesn't seem to do
-anything useful after all.
+For some reason that I can't explain, bash has special code for running inside Emacs. Lo and behold, if ~$TERM~ is ~dumb~ and ~$INSIDE_EMACS~ is set, then line editing is disabled by the shell itself. Any reason for this? I would love to know. Changing ~$TERM~ to something other then ~dumb~ fixes the issue, but then programs might not interpret our terminals capabilities correct. The best thing to do is remove the environment variable ~$INSIDE_EMACS~. Doesn't seem to do anything useful after all.
 #+BEGIN_SRC lisp
 (advice-add 'comint-term-environment
             :filter-return (lambda (env) (cons "INSIDE_EMACS" env)))
@@ -388,22 +301,97 @@ anything useful after all.
 And with that we have working tab completion in bash!
 
 **** Making completion "Emacsy"
-We could stop here and just create a function to send tab to the underlying
-process. It would behave exactly like the terminal does. But this is Emacs. The
-whole reason we are using ~shell-mode~ in the first place is because things in
-Emacs are nicer then things in the terminal. We have things like
-~completion-at-point~ and ~company-mode~ that would make a terminal emulators head
-spin. Makes sense to take advantage of that. So I created a new package called
-[[https://github.com/CeleritasCelery/emacs-native-shell-complete][native-complete]] that talks to the underlying process and gets the actual
-completions that the shell would natively provide. No more trying to use other
-packages to /guess/ the shells state, or starting another process that may be out
-of sync. It even supports invoking subshells! This effort is still work in
-progress, and many shells have yet to be tested. As with many things, it is not
-as simple in the implementation as it should be.
+We could stop here and just create a function to send tab to the underlying process. It would behave exactly like the terminal does. But this is Emacs. The whole reason we are using ~shell-mode~ in the first place is because things in Emacs are nicer then things in the terminal. We have things like ~completion-at-point~ and ~company-mode~ that would make a terminal emulators head spin. Makes sense to take advantage of that. So I created a new package called [[https://github.com/CeleritasCelery/emacs-native-shell-complete][native-complete]] that talks to the underlying process and gets the actual completions that the shell would natively provide. No more trying to use other packages to /guess/ the shells state, or starting another process that may be out of sync. It even supports invoking subshells! This effort is still work in progress, and many shells have yet to be tested. As with many things, it is not as simple in the implementation as it should be.
 
-I hope this is the shell-mode completion Endgame. I don't think I can take much
-more.
+I hope this is the shell-mode completion Endgame. I don't think I can take much more.
 
+*** DONE [#B] When pure function lie
+:PROPERTIES:
+:EXPORT_DATE: 2021-04-07
+:EXPORT_FILE_NAME: when-pure-functions-lie
+:END:
+Here is a simple question. Given the lisp function below (and that the function is not advised) what will the output be of ~(foo)~?
+#+begin_src emacs-lisp
+  (defun foo ()
+    "foo")
+#+end_src
+
+Seems pretty simple right? How could the answer be anything other then ~"foo"~? It is just returning a constant string. Or is it? The real answer to this question is...
+
+We have no idea. It can could be any string of length 3.
+
+How can this be? Well it turns out that constant literals in lisp (common lisp, emacs lisp, etc) are not constant. They can be modified at runtime like any other variable. Here is an elisp example that does just that.
+#+begin_src emacs-lisp
+  (defun foo ()
+    "foo")
+
+  (foo) => "foo"
+
+  (defun bar ()
+    (let ((x (foo)))
+      (aset x 0 ?福)
+      x))
+
+  (bar) => "福oo"
+  (foo) => "福oo"
+#+end_src
+
+Look at that! We have modified the behavior of another function using only its return value. We might have considered ~foo~ a [[https://en.wikipedia.org/wiki/Pure_function][pure function]]. However this cannot be the case because we can return different values for the same input.
+
+This is true whether it's dynamic or lexically bound, interpreted or byte compiled. And there is no way to get the original literal value back without redefining the function. Which means that once you try and instrument the function to see what is going on, the problem magically goes away! Here is another example where we are able to change a different constant literal in the same function. Since ~foo~ is byte-compiled, the two constants are mapped to the same mutable object. So changing one changes the other!
+  #+begin_src emacs-lisp
+    (defvar global)
+
+    (byte-compile
+     (defun foo (x)
+       (setq global "foo")
+       (concat "foo" x)))
+
+    (foo "bar") => "foobar"
+
+    (aset global 2 ?x)
+
+    (foo "bar") => "foxbar"
+#+end_src
+
+**** Why does this happen?
+Strings in lisp are mutable, and when you pass a string to something it actually passes a reference to it. But once you have a reference to a string, you can modify it however you want. Which means that you are modifying the original string that was part of the constant list of the function!
+
+As far as I could find, this behavior is unique to lisp (and it works with literal lists and vectors as well). Other dynamic languages don't have this property. For example, the python code below does not change the original list.
+#+begin_src python
+  def foo():
+      return [1, 2, 3]
+
+  def bar():
+      x = foo()
+      x[0] = 0
+      return x
+
+  print(foo()) => [1, 2, 3]
+  print(bar()) => [0, 2, 3]
+  print(foo()) => [1, 2, 3]
+#+end_src
+
+But the elisp version will
+#+begin_src emacs-lisp
+  (defun foo ()
+    '[1 2 3])
+
+  (defun bar ()
+    (let ((x (foo)))
+      (aset x 0 0)
+      x))
+
+  (foo) => [1 2 3]
+  (bar) => [0 2 3]
+  (foo) => [0 2 3]
+#+end_src
+
+I would venture to say that anytime you overwrite a constant literal it almost certainly a bug. And a very hard to debug one at that! So why does lisp allow this? I imagine a large part of it is simplifying the implementation. You don't have to check if the value you are modifying is constant or not, you just mutate it. Another part of it is that Common Lisp was conceived in a time when string where just vectors of ascii characters (Similar to C). That made modifying them like modifying normal arrays. But now with the advent of unicode, changing a "character" of string is not so easy. It can involve shifting the entire string or even reallocating depending on the size of the code point. This is why most modern languages have immutable strings by default.
+
+This is another reason that it is hard to make a true multi-threaded elisp. You can't share function between threads when "normal" code can change the behavior of functions being used in different threads. Functions that look pure might be changing under the hood. In this situation you are cross-pollinating your code with mutable data. I should add that this really has nothing to do with [[https://en.wikipedia.org/wiki/Homoiconicity][homoiconicity]]. You could still have a fully homoiconic language without the ability to overwrite constant literals.
+
+When I first saw this behavior, I thought for sure that I found a bug in the language implementation. This couldn't possibly be intentional. But after investigating more, I found that this was expected... at least if you are lisp programmer.
 *** TODO [#B] compilation mode on steroids
 =compile.el= is a built-in package for Emacs that Let's you run
 compilations in special dedicated mode. For example, if we wanted to
@@ -455,9 +443,6 @@ it easier to adapt this workflow to your needs.
 **** the status window
 
 **** log file mode
-
-*** TODO [#B] just do it
-Just start the task you don't know anything about, and you will be almost done
 
 *** TODO [#B] Emacs in 10 years
 Emacs is the editor of a lifetime. It has been around more then 40 years, and I hope it will be around another 40. There are so many editors that come in with new tech and fancy features, but within a decade or two. But I hopefully will be able to use Emacs for the rest of my life. The editor is always adapting and changing. Here I put down some of my thoughts on what I hope the future of Emacs holds, and also what I hope it does not.
@@ -530,4 +515,3 @@ What could we do with a generational garbage collector?
 Be cool to create some graphs
 *** TODO [#B] Trace trees
 Explain what trace trees are and why they are so cool
-*** TODO [#B] Please Apple, Give me control of my photos.
