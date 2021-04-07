@@ -7,3 +7,6 @@
 [submodule "hyde-y"]
 	path = themes/hyde-y
 	url = https://github.com/CeleritasCelery/hyde-y.git
+[submodule "themes/hugo-theme-learn"]
+	path = themes/hugo-theme-learn
+	url = https://github.com/matcornic/hugo-theme-learn.git
