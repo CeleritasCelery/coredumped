@@ -75,3 +75,8 @@ And with that we have working tab completion in bash!
 We could stop here and just create a function to send tab to the underlying process. It would behave exactly like the terminal does. But this is Emacs. The whole reason we are using `shell-mode` in the first place is because things in Emacs are nicer then things in the terminal. We have things like `completion-at-point` and `company-mode` that would make a terminal emulators head spin. Makes sense to take advantage of that. So I created a new package called [native-complete](https://github.com/CeleritasCelery/emacs-native-shell-complete) that talks to the underlying process and gets the actual completions that the shell would natively provide. No more trying to use other packages to _guess_ the shells state, or starting another process that may be out of sync. It even supports invoking subshells! This effort is still work in progress, and many shells have yet to be tested. As with many things, it is not as simple in the implementation as it should be.
 
 I hope this is the shell-mode completion Endgame. I don't think I can take much more.
+
+
+### Have a comment? {#have-a-comment}
+
+View the discussion on [Reddit](https://www.reddit.com/r/emacs/comments/ek8v0e/native%5Fshell%5Fcompletion%5Fin%5Femacs/?utm%5Fsource=share&utm%5Fmedium=web2x&context=3) or send me an email

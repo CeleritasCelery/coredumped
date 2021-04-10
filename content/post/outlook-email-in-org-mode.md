@@ -263,3 +263,8 @@ that region."
              (deactivate-mark))
     (apply #'normalize-text (cl-sort (list (point) (mark t)) '<))))
 {{< /highlight >}}
+
+
+### Have a comment? {#have-a-comment}
+
+View the discussion on [Reddit](https://www.reddit.com/r/emacs/comments/gxrg0b/writing%5Femail%5Ffor%5Foutlook%5Finside%5Femacs/?utm%5Fsource=share&utm%5Fmedium=web2x&context=3) or send me an email

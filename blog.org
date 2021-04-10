@@ -238,6 +238,8 @@ Unless you disable it, outlook will try and "prettify" some characters as you ty
                (deactivate-mark))
       (apply #'normalize-text (cl-sort (list (point) (mark t)) '<))))
 #+END_SRC
+***** Have a comment?
+View the discussion on [[https://www.reddit.com/r/emacs/comments/gxrg0b/writing_email_for_outlook_inside_emacs/?utm_source=share&utm_medium=web2x&context=3][Reddit]] or send me an email
 
 *** DONE Native shell completion in Emacs
 :PROPERTIES:
@@ -305,6 +307,8 @@ We could stop here and just create a function to send tab to the underlying proc
 
 I hope this is the shell-mode completion Endgame. I don't think I can take much more.
 
+***** Have a comment?
+View the discussion on [[https://www.reddit.com/r/emacs/comments/ek8v0e/native_shell_completion_in_emacs/?utm_source=share&utm_medium=web2x&context=3][Reddit]] or send me an email
 *** DONE [#B] When pure function lie
 :PROPERTIES:
 :EXPORT_DATE: 2021-04-07
@@ -392,6 +396,8 @@ I would venture to say that anytime you overwrite a constant literal it almost c
 This is another reason that it is hard to make a true multi-threaded elisp. You can't share function between threads when "normal" code can change the behavior of functions being used in different threads. Functions that look pure might be changing under the hood. In this situation you are cross-pollinating your code with mutable data. I should add that this really has nothing to do with [[https://en.wikipedia.org/wiki/Homoiconicity][homoiconicity]]. You could still have a fully homoiconic language without the ability to overwrite constant literals.
 
 When I first saw this behavior, I thought for sure that I found a bug in the language implementation. This couldn't possibly be intentional. But after investigating more, I found that this was expected... at least if you are lisp programmer.
+*****  Have a comment?
+View the discussion on [[https://www.reddit.com/r/emacs/comments/mm70re/when_pure_functions_lie/?utm_source=share&utm_medium=web2x&context=3][Reddit]] or send me an email
 *** TODO [#B] compilation mode on steroids
 =compile.el= is a built-in package for Emacs that Let's you run
 compilations in special dedicated mode. For example, if we wanted to

@@ -95,3 +95,8 @@ I would venture to say that anytime you overwrite a constant literal it almost c
 This is another reason that it is hard to make a true multi-threaded elisp. You can't share function between threads when "normal" code can change the behavior of functions being used in different threads. Functions that look pure might be changing under the hood. In this situation you are cross-pollinating your code with mutable data. I should add that this really has nothing to do with [homoiconicity](https://en.wikipedia.org/wiki/Homoiconicity). You could still have a fully homoiconic language without the ability to overwrite constant literals.
 
 When I first saw this behavior, I thought for sure that I found a bug in the language implementation. This couldn't possibly be intentional. But after investigating more, I found that this was expected... at least if you are lisp programmer.
+
+
+### Have a comment? {#have-a-comment}
+
+View the discussion on [Reddit](https://www.reddit.com/r/emacs/comments/mm70re/when%5Fpure%5Ffunctions%5Flie/?utm%5Fsource=share&utm%5Fmedium=web2x&context=3) or send me an email
