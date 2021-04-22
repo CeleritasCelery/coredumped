@@ -19,3 +19,7 @@ copyright = "(c) 2021 Troy Hinckley."
 [author]
     name = "Troy Hinckley"
     email = "troy.hinckley@gmail.com"
+
+[markup]
+  [markup.highlight]
+    style = "monokailight"
