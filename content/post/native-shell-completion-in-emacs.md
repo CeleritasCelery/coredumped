@@ -2,7 +2,7 @@
 title = "Native shell completion in Emacs"
 author = ["Troy Hinckley"]
 date = 2020-01-04
-categories = ["emacs"]
+tags = ["shell", "emacs"]
 draft = false
 +++
 

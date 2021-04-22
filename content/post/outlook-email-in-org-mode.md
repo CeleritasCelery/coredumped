@@ -2,7 +2,7 @@
 title = "Using org mode to write email for outlook"
 author = ["Troy Hinckley"]
 date = 2019-02-08
-categories = ["emacs"]
+tags = ["org-mode", "emacs"]
 draft = false
 +++
 

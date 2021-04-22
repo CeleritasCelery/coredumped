@@ -2,7 +2,7 @@
 title = "When pure function lie"
 author = ["Troy Hinckley"]
 date = 2021-04-07
-categories = ["emacs"]
+tags = ["design", "emacs"]
 draft = false
 +++
 

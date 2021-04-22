@@ -2,14 +2,24 @@
 #+AUTHOR: Troy Hinckley
 #+HUGO_BASE_DIR: .
 
+* Main
+  :PROPERTIES:
+  :EXPORT_HUGO_SECTION: .
+  :END:
+
+** DONE [#B] About
+:PROPERTIES:
+:EXPORT_FILE_NAME: about
+:END:
+
+I am an engineer with a interests in Emacs, Programming languages, performance, and compilers. Currently working in hardware design at Intel in Colorado.
+
 * Posts
   :PROPERTIES:
   :EXPORT_HUGO_SECTION: post
   :END:
 
-** emacs :@emacs:
-
-*** DONE Using org mode to write email for outlook
+** DONE Using org mode to write email for outlook :org_mode:emacs:
 :PROPERTIES:
 :EXPORT_DATE: 2019-02-08
 :EXPORT_FILE_NAME: outlook-email-in-org-mode
@@ -26,8 +36,8 @@ The process I use to write my email with =org-mode= is as follows
 3. go to outlook and use a custom VBA function to insert the HTML from
    the clipboard as formatted text
 
-**** Setting up Emacs
-***** Using an org capture buffer
+*** Setting up Emacs
+**** Using an org capture buffer
 Using an org capture buffer is perfect for writing email, because I can save it as a draft if needed, or export the contents and then throw the buffer away. Also, most of the time, the content of interest is what I am working on that moment, so I have everything at hand. Here is the simple template that I use to write emails.
 #+BEGIN_SRC emacs-lisp -n
 (add-to-list 'org-capture-templates
@@ -35,7 +45,7 @@ Using an org capture buffer is perfect for writing email, because I can save it 
                "* %?" :empty-lines 1))
 #+END_SRC
 
-***** Exporting from org-mode
+**** Exporting from org-mode
 Normally if you wanted to export an org header as HTML, you would use =C-c C-e= to open the export menu. =hH= will open a dedicated buffer with the HTML contents of your org file. From there you can copy the whole buffer. However I find it much faster to use this helper function (bound to =C-x M-e=).
 
 #+BEGIN_SRC emacs-lisp +n
@@ -50,7 +60,7 @@ Normally if you wanted to export an org header as HTML, you would use =C-c C-e= 
       (message "HTML copied to clipboard")))
 #+END_SRC
 
-***** Better CSS for export
+**** Better CSS for export
 The default HTML exported by org is spartan to say the least. Thankfully it is pretty easy to define some custom to CSS that looks prettier and plays nicer with outlooks HTML rendering engine. The outlook compatible HTML I use is located [[https://github.com/CeleritasCelery/org-html-themes/blob/master/styles/email/css/email.css][here]]. The function below adds my CSS to =org-html-head=. It is called by =export-org-email= from the previous section.
 
 As you can see in the function below, I have this CSS at the local path =~/org/org-html-themes/styles/email/css/email.css=. You will need to change this to where ever you keep the CSS file.
@@ -68,8 +78,8 @@ As you can see in the function below, I have this CSS at the local path =~/org/o
      "</style>\n"))
 #+END_SRC
 
-**** setting up outlook
-***** Getting the HTML into outlook
+*** setting up outlook
+**** Getting the HTML into outlook
 This is the tricky part. outlook does not make it easy to insert HTML inline. I had to learn some VBA and use the outlook code editor. I hope I never have to do that again.
 
 To add a function to outlook
@@ -93,7 +103,7 @@ Sub PrependClipboardHTML()
 End Sub
 #+END_SRC
 
-***** Fix object library
+**** Fix object library
 This step may not apply to everyone, but in order to get this to work, I also had to add the =Microsoft Forms 2.0 Object Library= to the References. I figured this out by looking at [[https://www.reddit.com/r/orgmode/comments/74k2mx/org_link_to_message_within_outlook_2016/][this]] Reddit thread.
 
 1. Click on =Tools= in the menu bar (or use =Alt-t=).
@@ -101,7 +111,7 @@ This step may not apply to everyone, but in order to get this to work, I also ha
 3. Select =Browse...=
 4. Browse to =C:\Windows\System32\FM20.DLL= and select open
 
-***** Add to Quick Access Toolbar
+**** Add to Quick Access Toolbar
 This function only makes sense in context of an email. To enable it there, add it to the quick access toolbar at the top.
 
 1. Press =Ctrl-n= to open up a new email.
@@ -115,7 +125,7 @@ Now clicking on that button will copy clipboard contents into the email as HTML.
 
 The other bonus (or maybe the main point) is that now you can also use a built-in shorcut for the Quick Access Toolbar commands to run this one. By pressing =Alt=, you can see a number by your command.
 
-***** Matching the default font in Outlook
+**** Matching the default font in Outlook
 It is nice sometimes to have the default font in outlook match what you are exporting from org mode. To make this happen, do the following steps in Outlook.
 
 1. On the =File= tab, choose =Options= > =Mail=.
@@ -124,11 +134,11 @@ It is nice sometimes to have the default font in outlook match what you are expo
 4. In the =Font= box, choose the font, style, size, and color that you want to use. You can see a preview of your changes as you make them.
 5. Choose =OK= three times to return to Outlook.
 
-**** Bonus Content
+*** Bonus Content
 Here are a few more ideas that are not necessary for this workflow but
 are useful to me.
 
-***** More advanced VBA
+**** More advanced VBA
 The =PrependClipboardHTML= function I showed above is not actually the version I use. But I chose to mention present it as the solution because it is simple and works well. This more advanced version has two differences
 
 1. Works with inline email replies
@@ -211,7 +221,7 @@ The =PrependClipboardHTML= function I showed above is not actually the version I
       Set objApp = Nothing
   End Function
 #+END_SRC
-***** Normalize outlook formatting
+**** Normalize outlook formatting
 Unless you disable it, outlook will try and "prettify" some characters as you type with non ascii-compatible versions. This means that you will often encounter errors when copying code out of outlook and trying to paste into a shell or source file. The following function takes the last paste normalizes it to be ascii compatible.
 
 #+BEGIN_SRC emacs-lisp -n
@@ -238,10 +248,10 @@ Unless you disable it, outlook will try and "prettify" some characters as you ty
                (deactivate-mark))
       (apply #'normalize-text (cl-sort (list (point) (mark t)) '<))))
 #+END_SRC
-***** Have a comment?
+**** Have a comment?
 View the discussion on [[https://www.reddit.com/r/emacs/comments/gxrg0b/writing_email_for_outlook_inside_emacs/?utm_source=share&utm_medium=web2x&context=3][Reddit]] or send me an email
 
-*** DONE Native shell completion in Emacs
+** DONE Native shell completion in Emacs :shell:emacs:
 :PROPERTIES:
 :EXPORT_DATE: 2020-01-04
 :EXPORT_FILE_NAME: native-shell-completion-in-emacs
@@ -252,7 +262,7 @@ However there is one big disadvantage. You loose access to the state the shell. 
 
 But the shell knows its own state. In a normal terminal emulator, tab completion will give you access to it. When looking at my shell buffer, it seems that the information I want is just below the surface. If only there was some way to access it. I am not the only one who has had this thought. There is a [[https://stackoverflow.com/questions/163591/bash-autocompletion-in-emacs-shell-mode][stackoverflow]] with over 26,000 views asking this same question. But no one has managed to access the native tab completion before. So I determined to solve this once and for all.
 
-**** The curious case of bash
+*** The curious case of bash
 If you use csh and send some text followed by the tab character, it will print out all possible completions. But not bash. Try this code and you get nothing.
 #+BEGIN_SRC lisp
 (comint-simple-send (get-buffer-process (current-buffer)) "git\t\x15")
@@ -302,14 +312,14 @@ For some reason that I can't explain, bash has special code for running inside E
 
 And with that we have working tab completion in bash!
 
-**** Making completion "Emacsy"
+*** Making completion "Emacsy"
 We could stop here and just create a function to send tab to the underlying process. It would behave exactly like the terminal does. But this is Emacs. The whole reason we are using ~shell-mode~ in the first place is because things in Emacs are nicer then things in the terminal. We have things like ~completion-at-point~ and ~company-mode~ that would make a terminal emulators head spin. Makes sense to take advantage of that. So I created a new package called [[https://github.com/CeleritasCelery/emacs-native-shell-complete][native-complete]] that talks to the underlying process and gets the actual completions that the shell would natively provide. No more trying to use other packages to /guess/ the shells state, or starting another process that may be out of sync. It even supports invoking subshells! This effort is still work in progress, and many shells have yet to be tested. As with many things, it is not as simple in the implementation as it should be.
 
 I hope this is the shell-mode completion Endgame. I don't think I can take much more.
 
-***** Have a comment?
+**** Have a comment?
 View the discussion on [[https://www.reddit.com/r/emacs/comments/ek8v0e/native_shell_completion_in_emacs/?utm_source=share&utm_medium=web2x&context=3][Reddit]] or send me an email
-*** DONE [#B] When pure function lie
+** DONE [#B] When pure function lie :design:emacs:
 :PROPERTIES:
 :EXPORT_DATE: 2021-04-07
 :EXPORT_FILE_NAME: when-pure-functions-lie
@@ -358,7 +368,7 @@ This is true whether it's dynamic or lexically bound, interpreted or byte compil
     (foo "bar") => "foxbar"
 #+end_src
 
-**** Why does this happen?
+*** Why does this happen?
 Strings in lisp are mutable, and when you pass a string to something it actually passes a reference to it. But once you have a reference to a string, you can modify it however you want. Which means that you are modifying the original string that was part of the constant list of the function!
 
 As far as I could find, this behavior is unique to lisp (and it works with literal lists and vectors as well). Other dynamic languages don't have this property. For example, the python code below does not change the original list.
@@ -396,9 +406,9 @@ I would venture to say that anytime you overwrite a constant literal it almost c
 This is another reason that it is hard to make a true multi-threaded elisp. You can't share function between threads when "normal" code can change the behavior of functions being used in different threads. Functions that look pure might be changing under the hood. In this situation you are cross-pollinating your code with mutable data. I should add that this really has nothing to do with [[https://en.wikipedia.org/wiki/Homoiconicity][homoiconicity]]. You could still have a fully homoiconic language without the ability to overwrite constant literals.
 
 When I first saw this behavior, I thought for sure that I found a bug in the language implementation. This couldn't possibly be intentional. But after investigating more, I found that this was expected... at least if you are lisp programmer.
-*****  Have a comment?
+****  Have a comment?
 View the discussion on [[https://www.reddit.com/r/emacs/comments/mm70re/when_pure_functions_lie/?utm_source=share&utm_medium=web2x&context=3][Reddit]] or send me an email
-*** TODO [#B] compilation mode on steroids
+** TODO [#B] compilation mode on steroids
 =compile.el= is a built-in package for Emacs that Let's you run
 compilations in special dedicated mode. For example, if we wanted to
 run make on a project, we would call ~M-x compile~ and it would
@@ -434,57 +444,57 @@ and commands used. I think that would just create additional noise
 anyway, so I am replacing all of that with sudo code. It should make
 it easier to adapt this workflow to your needs.
 
-**** dispatching commands
+*** dispatching commands
      My first issue was that I was frequently changing the commands
      line arguments. This would require me to
 
-**** error parsing
+*** error parsing
 
-**** detecting stalls
+*** detecting stalls
 
-**** the command queue
+*** the command queue
 
-**** alerts when a command finishes
+*** alerts when a command finishes
 
-**** the status window
+*** the status window
 
-**** log file mode
+*** log file mode
 
-*** TODO [#B] Emacs in 10 years
+** TODO [#B] Emacs in 10 years
 Emacs is the editor of a lifetime. It has been around more then 40 years, and I hope it will be around another 40. There are so many editors that come in with new tech and fancy features, but within a decade or two. But I hopefully will be able to use Emacs for the rest of my life. The editor is always adapting and changing. Here I put down some of my thoughts on what I hope the future of Emacs holds, and also what I hope it does not.
-**** GUI first, Terminal second
+*** GUI first, Terminal second
 Like many old applications, Emacs started in the terminal and that is where it takes it roots. This was the only option before the advent of GUI's. And even after graphical interfaces became popular there were still so many advantages to running in a simple terminal environment. But times have changed and there are now many advantges to using Emacs as GUI.  There is a popular [[https://blog.aaronbieber.com/2016/12/29/don-t-use-terminal-emacs.html][article]] by Aaron Bieber that explains some of the reasons, so I won't reiterate those here. But I hope the future of Emacs is focused on GUI first, Terimal second. You can already see this happening with things like Harbuff and better ~pixel-scroll-mode~ support being added to Emacs 27.
-***** scrolling and cursor stays put
+**** scrolling and cursor stays put
 Scrolling in Emacs has always felt awkward compared to what you would get in a normal gui application. For one thing, you cannot scroll a window without also moving the cursor. And there is no easy way to get the cursor back unless you remembered to set a mark first. This need not be.
 
-***** draw a window anywhere
+**** draw a window anywhere
 If you want to do a fully stylized popup you need to either use an overlay or a child frame. Overlays have the limitation that they cannot cross window boundaries and only work with monospaced fonts. Using frames means you popup is dependent on your window manager. For me this means that every time I show or hide a child frame it flashes white before it redraws, leading to a very jarring experience. Emacs should be able to draw a floating window anywhere in the frame that can be used to tool-tips, completion, or anything else.
-***** give me back my keys!
+**** give me back my keys!
 For historical reasons, terminals treat many different keybindings as the same. For example in a terminal emulator =C-j= and =C-m= are  =<return>=, =C-i= is =<tab>=, =C-[= is ~<esc>~, etc. Emacs carries these same terminal mappings into the GUI, even though the GUI can distinguish these keys. Fixing this requires some [[https://emacs.stackexchange.com/questions/220/how-to-bind-c-i-as-different-from-tab/221#221][voodoo]] with ~input-decode-map~. The GUI version of emacs should distinguish these keys, but for compatibility they could be bound to the same function by default. But that makes it easy for users to rebind them if needed.
-**** Better buffer model
-***** Long lines
+*** Better buffer model
+**** Long lines
 A common pain point with Emacs is handling files with long lines. There is a [[https://www.emacswiki.org/emacs/SoLong][new package]] in Emacs 27 that will check for long lines in a file and disable features if they are over a certain length. But this still does not get to the heart of the problem. There is a whole [[https://github.com/codygman/figure-out-emacs-long-lines-issue/blob/master/figuring-out-emacs-display-issues.org][github repo]] dedicated to trying to solve this issue. However it looks like it would need a complete rework of the Emacs buffer model.
-***** Code folding
+**** Code folding
 If you try and fold more then a few thousand lines Emacs will slow to a crawl. Vim and sublime can handle this fine, and many users of those editors will enable folding by default. But in Emacs that is a time bomb waiting to happen. This seems related to the work Emacs has to do every time you move the cursor. I have never been able to find a mode (including ~set-selective-display~) That is performant on large files. And large files it where you need folding the most.
-**** modern runtime
-***** jit compiler
+*** modern runtime
+**** jit compiler
 There have been several attempts to create a JIT compiler for Emacs with the most [[https://lists.gnu.org/archive/html/emacs-devel/2018-08/msg00393.html][recent]] one being back in 2018. JIT stands for "Just in Time" compiler that will interprent new code straight byte-code. Currently byte code is only created if you explicityly byte-compile a function or file. This is a feature of many modern dynamic languages and could greatly improve the performance of evaluated elips code.
-***** byte code optimization
+**** byte code optimization
 Steve Yegge has a very interesting talk entitled [[http://steve-yegge.blogspot.com/2008/05/dynamic-languages-strike-back.html][Dynamic Languages Strike Back]] where he outlines some of the interesting advantages dynamic languages have over static ones. This advantage comes down to dynamic languages having a runtime process that optimize things on the fly, whereas a static language has to know everything at compile time. For example There is the concept of Trace Trees, where the runtime examines "hotspots" in the code and applies heavy optmiization to the most executed branches of that. This includes things like inlining function calls, tail call optimization, and caching values. There are a lot of really cool things that can happen with runtime environement like emacs.
 Trace trees, tail call, string interning, inlining
 fib(40) in python : 34
 fib(40) in emacs : 131
 fib(40) in c: 0.6 seconds
 almost 4x worse performace
-***** not stop-the-world GC
+**** not stop-the-world GC
 GC is a huge part of the total cost
 
 53 seconds of GC.
 13261 collections
 40% of it is GC
-***** make sure not to loose introspection
+**** make sure not to loose introspection
 
-***** reader macros
+**** reader macros
 
 http://xkcd.com/1638/
 
@@ -494,30 +504,30 @@ http://xkcd.com/1638/
 ="\\(\\`\\|[^\\]\\)\\(\\\\\\\\\\)*\\(\\\\\\?\\)\\'"=
 =r"(\`|[^\])(\\\\\)*(\\\?)\'"=
 
-***** move c code to elisp
+**** move c code to elisp
 Example of line numbers
 
-**** What I hope the future does not hold
+*** What I hope the future does not hold
 
-***** concurency
+**** concurency
 Leads to sloppy code
 there is a lot of headroom on in the single threaded space.
 Maybe limit it to font locking and buffer refresh
 
-***** first class extension languages
+**** first class extension languages
 Vim and neovim can do this.
 
 Those languages will fade. Emacs is the editor of a life time, it needs to stick around. And be comptaible long after those languages are gone.
 
 no brow
 
-*****  browser in emacs
-**** conclusion
+****  browser in emacs
+*** conclusion
 Make sure that you praise it. Excited.
 
 =C-c C-f=
-*** TODO [#B] Thoughts on Garbage collection in Emacs
+** TODO [#B] Thoughts on Garbage collection in Emacs
 What could we do with a generational garbage collector?
 Be cool to create some graphs
-*** TODO [#B] Trace trees
+** TODO [#B] Trace trees
 Explain what trace trees are and why they are so cool
