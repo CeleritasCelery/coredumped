@@ -13,3 +13,6 @@
 [submodule "pixyll"]
 	path = themes/pixyll
 	url = https://github.com/azmelanar/hugo-theme-pixyll.git
+[submodule "hyde-hyde"]
+	path = themes/hyde-hyde
+	url = https://github.com/htr3n/hyde-hyde.git
