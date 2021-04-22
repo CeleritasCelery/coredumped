@@ -1,8 +1,8 @@
 baseURL = "https://coredumped.dev"
 languageCode = "en-us"
 title = "Core Dumped"
-theme = "hyde-y"
-metaDataFormat = "yaml"
+theme = "hyde-hyde"
+metaDataFormat = "toml"
 copyright = "(c) 2021 Troy Hinckley."
 
 [permalinks]
@@ -16,10 +16,29 @@ copyright = "(c) 2021 Troy Hinckley."
         home = "home"
         topline = "A core dump of ideas and projects"
 
-[author]
-    name = "Troy Hinckley"
-    email = "troy.hinckley@gmail.com"
+[params.social]
+    github = "CeleritasCelery"
+    gitlab = "foconoco"
+    linkedin = "troy-hinckley-13779162"
+    email = "troyhinckley@gmail.com"
 
 [markup]
   [markup.highlight]
     style = "monokailight"
+
+## Main Menu
+[[menu.main]]
+    name = "Posts"
+    weight = 100
+    identifier = "posts"
+    url = "/post/"
+[[menu.main]]
+    name = "Tags"
+    weight = 200
+    identifier = "tags"
+    url = "/tags/"
+[[menu.main]]
+    name = "About"
+    weight = 300
+    identifier = "about"
+    url = "/about"
