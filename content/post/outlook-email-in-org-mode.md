@@ -28,9 +28,11 @@ The process I use to write my email with `org-mode` is as follows
 Using an org capture buffer is perfect for writing email, because I can save it as a draft if needed, or export the contents and then throw the buffer away. Also, most of the time, the content of interest is what I am working on that moment, so I have everything at hand. Here is the simple template that I use to write emails.
 
 {{< highlight emacs-lisp "linenos=table, linenostart=1" >}}
-(add-to-list 'org-capture-templates
-             '("e" "Email" entry (expand-file-name "email.org" org-directory)
-               "* %?" :empty-lines 1))
+(add-to-list
+ 'org-capture-templates
+ '("e" "Email"
+   entry (expand-file-name "email.org" org-directory)
+   "* %?" :empty-lines 1))
 {{< /highlight >}}
 
 
@@ -38,9 +40,10 @@ Using an org capture buffer is perfect for writing email, because I can save it 
 
 Normally if you wanted to export an org header as HTML, you would use `C-c C-e` to open the export menu. `hH` will open a dedicated buffer with the HTML contents of your org file. From there you can copy the whole buffer. However I find it much faster to use this helper function (bound to `C-x M-e`).
 
-{{< highlight emacs-lisp "linenos=table, linenostart=4" >}}
+{{< highlight emacs-lisp "linenos=table, linenostart=6" >}}
 (defun export-org-email ()
-  "Export the current email org buffer and copy it to the clipboard"
+  "Export the current email org buffer and copy it to the
+clipboard"
   (interactive)
   (let ((org-export-show-temporary-export-buffer nil)
         (org-html-head (org-email-html-head)))
@@ -57,7 +60,7 @@ The default HTML exported by org is spartan to say the least. Thankfully it is p
 
 As you can see in the function below, I have this CSS at the local path `~/org/org-html-themes/styles/email/css/email.css`. You will need to change this to where ever you keep the CSS file.
 
-{{< highlight emacs-lisp "linenos=table, linenostart=13" >}}
+{{< highlight emacs-lisp "linenos=table, linenostart=16" >}}
 (defun org-email-html-head ()
   "Create the header with CSS for use with email"
   (concat
@@ -87,7 +90,7 @@ To add a function to outlook
 
 <!--listend-->
 
-{{< highlight cs "linenos=table, linenostart=1" >}}
+```vb
 Sub PrependClipboardHTML()
     Dim email As Outlook.MailItem
     Dim cBoard As DataObject
@@ -101,7 +104,7 @@ Sub PrependClipboardHTML()
     Set cBoard = Nothing
     Set email = Nothing
 End Sub
-{{< /highlight >}}
+```
 
 
 ### Fix object library {#fix-object-library}
@@ -156,7 +159,7 @@ The `PrependClipboardHTML` function I showed above is not actually the version I
 
 <!--listend-->
 
-{{< highlight cs "linenos=table, linenostart=1" >}}
+```vb
 Sub PrependClipboardHTML()
     Dim email As Outlook.MailItem
     Dim cBoard As DataObject
@@ -232,14 +235,14 @@ Function GetCurrentItem() As Object
 
     Set objApp = Nothing
 End Function
-{{< /highlight >}}
+```
 
 
 ### Normalize outlook formatting {#normalize-outlook-formatting}
 
 Unless you disable it, outlook will try and "prettify" some characters as you type with non ascii-compatible versions. This means that you will often encounter errors when copying code out of outlook and trying to paste into a shell or source file. The following function takes the last paste normalizes it to be ascii compatible.
 
-{{< highlight emacs-lisp "linenos=table, linenostart=1" >}}
+```emacs-lisp
 (defun normalize-text (beg end)
   "normalize characters used in Microsoft formatting"
   (let* ((orig-text (buffer-substring beg end))
@@ -261,8 +264,9 @@ that region."
   (if (region-active-p)
       (progn (normalize-text beg end)
              (deactivate-mark))
-    (apply #'normalize-text (cl-sort (list (point) (mark t)) '<))))
-{{< /highlight >}}
+    (apply #'normalize-text
+           (cl-sort (list (point) (mark t)) '<))))
+```
 
 
 ### Have a comment? {#have-a-comment}

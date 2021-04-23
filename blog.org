@@ -12,7 +12,7 @@
 :EXPORT_FILE_NAME: about
 :END:
 
-I am an engineer with a interests in Emacs, Programming languages, performance, and compilers. Currently working in hardware design at Intel in Colorado.
+I am an engineer with interests in Emacs, Programming languages, performance, and compilers. Currently working in hardware design at Intel in Colorado.
 
 * Posts
   :PROPERTIES:
@@ -40,9 +40,11 @@ The process I use to write my email with =org-mode= is as follows
 **** Using an org capture buffer
 Using an org capture buffer is perfect for writing email, because I can save it as a draft if needed, or export the contents and then throw the buffer away. Also, most of the time, the content of interest is what I am working on that moment, so I have everything at hand. Here is the simple template that I use to write emails.
 #+BEGIN_SRC emacs-lisp -n
-(add-to-list 'org-capture-templates
-             '("e" "Email" entry (expand-file-name "email.org" org-directory)
-               "* %?" :empty-lines 1))
+  (add-to-list
+   'org-capture-templates
+   '("e" "Email"
+     entry (expand-file-name "email.org" org-directory)
+     "* %?" :empty-lines 1))
 #+END_SRC
 
 **** Exporting from org-mode
@@ -50,7 +52,8 @@ Normally if you wanted to export an org header as HTML, you would use =C-c C-e= 
 
 #+BEGIN_SRC emacs-lisp +n
   (defun export-org-email ()
-    "Export the current email org buffer and copy it to the clipboard"
+    "Export the current email org buffer and copy it to the
+  clipboard"
     (interactive)
     (let ((org-export-show-temporary-export-buffer nil)
           (org-html-head (org-email-html-head)))
@@ -87,7 +90,7 @@ To add a function to outlook
 2. You should see the default project. Change this project name to something more appropriate. Note that the Project name *MUST NOT* be the name of the function (~PrependClipboardHTML~) so name it something else.
 3. Right click on the project to add a new module and copy in the function from below
 
-#+BEGIN_SRC cs -n
+#+BEGIN_SRC vb
 Sub PrependClipboardHTML()
     Dim email As Outlook.MailItem
     Dim cBoard As DataObject
@@ -144,7 +147,7 @@ The =PrependClipboardHTML= function I showed above is not actually the version I
 1. Works with inline email replies
 2. If the subject line is empty, the HTML header at the start of the body is used as the subject line. This allows you add the subject line in org-mode and have it automatcially inserted.
 
-#+BEGIN_SRC cs -n
+#+BEGIN_SRC vb
   Sub PrependClipboardHTML()
       Dim email As Outlook.MailItem
       Dim cBoard As DataObject
@@ -224,7 +227,7 @@ The =PrependClipboardHTML= function I showed above is not actually the version I
 **** Normalize outlook formatting
 Unless you disable it, outlook will try and "prettify" some characters as you type with non ascii-compatible versions. This means that you will often encounter errors when copying code out of outlook and trying to paste into a shell or source file. The following function takes the last paste normalizes it to be ascii compatible.
 
-#+BEGIN_SRC emacs-lisp -n
+#+BEGIN_SRC emacs-lisp
   (defun normalize-text (beg end)
     "normalize characters used in Microsoft formatting"
     (let* ((orig-text (buffer-substring beg end))
@@ -246,7 +249,8 @@ Unless you disable it, outlook will try and "prettify" some characters as you ty
     (if (region-active-p)
         (progn (normalize-text beg end)
                (deactivate-mark))
-      (apply #'normalize-text (cl-sort (list (point) (mark t)) '<))))
+      (apply #'normalize-text
+             (cl-sort (list (point) (mark t)) '<))))
 #+END_SRC
 **** Have a comment?
 View the discussion on [[https://www.reddit.com/r/emacs/comments/gxrg0b/writing_email_for_outlook_inside_emacs/?utm_source=share&utm_medium=web2x&context=3][Reddit]] or send me an email
