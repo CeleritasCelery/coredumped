@@ -375,7 +375,7 @@ This is true whether it's dynamic or lexically bound, interpreted or byte compil
 *** Why does this happen?
 Strings in lisp are mutable, and when you pass a string to something it actually passes a reference to it. But once you have a reference to a string, you can modify it however you want. Which means that you are modifying the original string that was part of the constant list of the function!
 
-As far as I could find, this behavior is unique to lisp (and it works with literal lists and vectors as well). Other dynamic languages don't have this property. For example, the python code below does not change the original list.
+As far as I could find, this behavior is unique to lisp (and it works with literal lists and vectors as well). Other dynamic languages don't have this property. For example, the python code below does not change the original list[fn:1].
 #+begin_src python
   def foo():
       return [1, 2, 3]
@@ -412,6 +412,9 @@ This is another reason that it is hard to make a true multi-threaded elisp. You 
 When I first saw this behavior, I thought for sure that I found a bug in the language implementation. This couldn't possibly be intentional. But after investigating more, I found that this was expected... at least if you are lisp programmer.
 ****  Have a comment?
 View the discussion on [[https://www.reddit.com/r/emacs/comments/mm70re/when_pure_functions_lie/?utm_source=share&utm_medium=web2x&context=3][Reddit]] or send me an email
+
+[fn:1] As several people [[https://www.reddit.com/r/emacs/comments/mm70re/when_pure_functions_lie/gtq1oir?utm_source=share&utm_medium=web2x&context=3][pointed out]], the reason this works in python is because it is making a copy of the list every time it returns. You could introduce the same issue in python using default arguments, which are not copied. To protect against this in lisp, you can use ~(vector 1 2 3)~ instead of ~'(1 2 3)~ and it will make a copy of the vector.
+
 ** TODO [#B] compilation mode on steroids
 =compile.el= is a built-in package for Emacs that Let's you run
 compilations in special dedicated mode. For example, if we wanted to

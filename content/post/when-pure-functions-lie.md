@@ -58,7 +58,7 @@ This is true whether it's dynamic or lexically bound, interpreted or byte compil
 
 Strings in lisp are mutable, and when you pass a string to something it actually passes a reference to it. But once you have a reference to a string, you can modify it however you want. Which means that you are modifying the original string that was part of the constant list of the function!
 
-As far as I could find, this behavior is unique to lisp (and it works with literal lists and vectors as well). Other dynamic languages don't have this property. For example, the python code below does not change the original list.
+As far as I could find, this behavior is unique to lisp (and it works with literal lists and vectors as well). Other dynamic languages don't have this property. For example, the python code below does not change the original list[^fn:1].
 
 ```python
 def foo():
@@ -100,3 +100,5 @@ When I first saw this behavior, I thought for sure that I found a bug in the lan
 ### Have a comment? {#have-a-comment}
 
 View the discussion on [Reddit](https://www.reddit.com/r/emacs/comments/mm70re/when%5Fpure%5Ffunctions%5Flie/?utm%5Fsource=share&utm%5Fmedium=web2x&context=3) or send me an email
+
+[^fn:1]: As several people [pointed out](https://www.reddit.com/r/emacs/comments/mm70re/when%5Fpure%5Ffunctions%5Flie/gtq1oir?utm%5Fsource=share&utm%5Fmedium=web2x&context=3), the reason this works in python is because it is making a copy of the list every time it returns. You could introduce the same issue in python using default arguments, which are not copied. To protect against this in lisp, you can use `(vector 1 2 3)` instead of `'(1 2 3)` and it will make a copy of the vector.
