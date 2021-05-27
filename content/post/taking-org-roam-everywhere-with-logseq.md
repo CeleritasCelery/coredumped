@@ -14,21 +14,9 @@ Then I happened upon logseq. It is open-source, privacy-centric note taking app 
 
 ## configuring logseq {#configuring-logseq}
 
-One of the requirements is that your notes must be in a github  (though they are adding support for other backends). When you go to [logseq.com](https://logseq.com/) you can setup a new repo. From there we need update some of the settings to work with org-roam. Go to `logseq/config.edn` which should look like this
+One of the requirements is that your notes must be in a github  (though they are adding support for other backends). When you go to [logseq.com](https://logseq.com/) you can setup a new repo. From there we need update some of the settings to work with org-roam. Go to `logseq/config.edn`
 
-```clojure
- {;; Currently, we support either "Markdown" or "Org".
-  ;; This can overwrite your global preference so that
-  ;; maybe your personal preferred format is Org but you'd
-  ;; need to use Markdown for some projects.
-  :preferred-format Markdown
-
-  ;; Preferred workflow style.
-  ;; Value is either ":now" for NOW/LATER style,
-  ;; or ":todo" for TODO/DOING style.
-  :preferred-workflow :now
-...
-```
+{{< figure src="/images/config-edn-screenshot.png" >}}
 
 We are going to change 4 things here:
 
@@ -70,6 +58,9 @@ One thing to keep in mind is that there is currently a [bug](https://github.com/
 ## Taking org-roam on the go {#taking-org-roam-on-the-go}
 
 With org-roam and logseq setup, I can now access my notes anywhere. When I am around my computer I have Emacs open and take notes in org-roam. When I am out on the go, I have logseq. As an added bonus, logseq supports desktop browsers (and even has a desktop app), so I use that for taking notes on my work computer (where I don't want to keep personal notes on filesystem). I finally have access to my notes everywhere and don't have to be tied to my PC. They are a perfect match.
+
+
+## screenshot {#screenshot}
 
 {{< figure src="/images/logseq-screen-shot.png" >}}
 

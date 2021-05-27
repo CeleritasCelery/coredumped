@@ -542,21 +542,9 @@ There are some stop gap solutions to try and make up the difference. [[https://b
 
 Then I happened upon logseq. It is open-source, privacy-centric note taking app inspired by org-mode and roam-research. It has native support for the org mode format. Since both org-roam and logseq are based around roam itself, I can use the same workflow on both apps. It has all the features you would expect of a roam replica, including full text search, page links, inline images/video's, etc. As a bonus it is fairly easy to setup to work with org-roam.
 *** configuring logseq
-One of the requirements is that your notes must be in a github  (though they are adding support for other backends). When you go to [[https://logseq.com/][logseq.com]] you can setup a new repo. From there we need update some of the settings to work with org-roam. Go to ~logseq/config.edn~ which should look like this
+One of the requirements is that your notes must be in a github  (though they are adding support for other backends). When you go to [[https://logseq.com/][logseq.com]] you can setup a new repo. From there we need update some of the settings to work with org-roam. Go to ~logseq/config.edn~
 
-#+begin_src clojure
-  {;; Currently, we support either "Markdown" or "Org".
-   ;; This can overwrite your global preference so that
-   ;; maybe your personal preferred format is Org but you'd
-   ;; need to use Markdown for some projects.
-   :preferred-format Markdown
-
-   ;; Preferred workflow style.
-   ;; Value is either ":now" for NOW/LATER style,
-   ;; or ":todo" for TODO/DOING style.
-   :preferred-workflow :now
- ...
-#+end_src
+[[file:static/images/config-edn-screenshot.png]]
 
 We are going to change 4 things here:
 1. Change ~:preferred-format~ to ~Org~,
@@ -589,7 +577,7 @@ For the emacs-side config we need to make sure that org-roam follows the same di
 One thing to keep in mind is that there is currently a [[https://github.com/logseq/logseq/issues/2002][bug]] in logseq where it will not follow links correctly unless the /description/ matches the /title/. For example, the link ~[[file:biology.org][biological]]~ will not go to the ~biology.org~ file, but instead try and create a new file called ~biological.org~. Also logseq will not recognize this as a backlink.
 *** Taking org-roam on the go
 With org-roam and logseq setup, I can now access my notes anywhere. When I am around my computer I have Emacs open and take notes in org-roam. When I am out on the go, I have logseq. As an added bonus, logseq supports desktop browsers (and even has a desktop app), so I use that for taking notes on my work computer (where I don't want to keep personal notes on filesystem). I finally have access to my notes everywhere and don't have to be tied to my PC. They are a perfect match.
-
+*** screenshot
 [[file:static/images/logseq-screen-shot.png]]
 
 [fn:1] The reason this needs to be changed is because Emacs does not support ordinal dates (1st, 2nd, 3rd, 4th, etc).If you want to add support for ordinal dates, you can follow my config [[https://github.com/CeleritasCelery/emacs.d/blob/master/emacs.org#roam][here]].
