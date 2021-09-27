@@ -410,6 +410,190 @@ View the discussion on [[https://www.reddit.com/r/emacs/comments/mm70re/when_pur
 
 [fn:1] As several people [[https://www.reddit.com/r/emacs/comments/mm70re/when_pure_functions_lie/gtq1oir?utm_source=share&utm_medium=web2x&context=3][pointed out]], the reason this works in python is because it is making a copy of the list every time it returns. You could introduce the same issue in python using default arguments, which are not copied. To protect against this in lisp, you can use ~(vector 1 2 3)~ instead of ~'(1 2 3)~ and it will make a copy of the vector.
 
+** TODO [#B] Building an Emacs lisp VM in Rust :emacs:rust:
+:PROPERTIES:
+:EXPORT_DATE: 2021-09-21
+:EXPORT_FILE_NAME: building-an-emacs-lisp-vm-in-rust
+:END:
+
+About a year ago I was bitten by the PL bug. It all started with reading crafting interpeters and discovering the wonders under the hood of a compiler. I have also been a big fan of Emacs, and this started to get me interested in how it's interpreter works. At the same time I was reading the rust book and trying to understand the concepts there. This all came to a head, and I decided to write an Emacs Lisp interpreter in rust.
+
+My goal for this project is to bootstrap [[https://github.com/emacs-mirror/emacs/blob/master/lisp/emacs-lisp/bytecomp.el][bytecomp.el]] and use the emacs compiler with my bytecode vm. I have not reached that goal yet, but I have bootstrapped several core emacs lisp files. At this point I have a enough of interpreter that I want to share an update an mention some of the trade-offs and other things I have learned.
+*** Object representation
+
+Rust provides a lot of power in its enums and structs. However you are limited to the the representations that rust provides. Most of the time this isn’t a problem. However because of the language specification that pointers are a full word, you can’t normally use optimizations like [[https://piotrduperas.com/posts/nan-boxing][NaN-boxing]] or [[https://en.wikipedia.org/wiki/Tagged_pointer][pointer tagging]] in rust.
+
+Because of this, when I was initially defining an object type, I took the C-style route and defined it as a ~union~.
+#+begin_src rust
+union Object<'ob> {
+    tag: Tag,
+    data: i64,
+}
+#+end_src
+
+Then in the boxing and unboxing code, I could check the type of the tag field and reinterpret the bits as whatever type was needed. This had the advantage of being extremely flexible, since I had complete control over the bit layout and representation. However it also had some drawbacks compared to a proper rust enum.
+
+1. Unboxing requires ~unsafe~ code
+2. I needed to manually match the tag to the right data type. There were no compiler checks here.
+3. There is no way to match directly on the union. I had to create an accessor function called ~val~ to get the underlying value as an enum.
+4. Can't use variants as values. With an Enum you can use ~Option::None~ or ~Option::Some(T)~ as value, but instead I had to create constants to represent common values.
+5. No debugger support. A union is completely opaque to the rust debugger.
+6. No destructuring support. Since rust's pattern syntax does not understand my type, there is no way to do the following
+#+begin_src rust
+  match object {
+      Some(Object::Nil) => ...,
+      Some(Object::String(s)) => ...,
+      _ => ...
+  }
+#+end_src
+
+Given all this I decided to try and See if I could make an enum that still had the space optimization of a tagged pointer (word width). This is done with a Data type, which is 56 bits wide.
+
+#+begin_src rust
+#[derive(Copy, Clone)]
+pub struct Data<T> {
+    data: [u8; 7],
+    marker: PhantomData<T>,
+}
+#+end_src
+
+When this is used in an enum the result is a 64 bit object (The same size as a tagged pointer on 64-bit systems).
+
+#+begin_src rust
+pub enum Object<'ob> {
+    Int(Fixnum),
+    Float(Data<&'ob f64>),
+    Symbol(Data<Symbol>),
+    True,
+    Nil,
+    Cons(Data<&'ob Cons<'ob>>),
+    Vec(Data<&'ob Vec<Object<'ob>>>),
+    String(Data<&'ob String>),
+    LispFn(Data<&'ob LispFn<'ob>>),
+    SubrFn(Data<&'ob SubrFn>),
+}
+#+end_src
+
+These ~Data~ structures have a ~inner~ method that transforms the 56 bit payload into a full width pointer. This is done by shifting the pointer so that the top byte is used for the discriminant.
+
+#+begin_src rust
+  impl<T> Data<T> {
+      const fn expand(self) -> i64 {
+          let data = self.data;
+          let whole = [
+              0, data[0], data[1], data[2], data[3], data[4], data[5], data[6],
+          ];
+          i64::from_le_bytes(whole) >> 8
+      }
+  }
+
+  impl<'a, T> Inner<&'a T> for Data<&'a T> {
+      fn inner(self) -> &'a T {
+          let bits = self.expand();
+          let ptr = bits as *const T;
+          unsafe { &*ptr }
+      }
+  }
+#+end_src
+
+Rust optimizes this into a simple 8 bit shift for boxing and unboxing. The Data type can also hold additional information like mutability.
+
+Overall I am very happy with this approach. But is has limitations of it's own.
+
+One thing that would make this approach much simpler is if we could use the ~Deref~ trait to unbox ~Data<T>~ but this only works some of the time. Since deref takes ~&self~, it ties the lifetime of the borrow of ~self~ to the lifetime of the unboxed data.
+
+#+begin_src rust
+  impl<'a, T> Deref for Data<&'a T> {
+      type Target = T;
+
+      #[inline(always)]
+      fn deref(&'_ self) -> &'a Self::Target {
+          self.inner()
+      }
+  }
+#+end_src
+
+This makes it much less useful. I wish rust had a trait like ~DerefCopy~ that transformed ~self~ to ~T~ instead of transforming ~&self~ to ~&T~ and still offered [[https://doc.rust-lang.org/std/ops/trait.Deref.html#more-on-deref-coercion][deref coercion]].
+
+#+begin_src rust
+  impl<'a, T> DerefCopy for Data<&'a T> {
+      type Target = &'a T;
+
+      #[inline(always)]
+      fn deref(self) -> &Self::Target {
+          self.inner()
+      }
+  }
+#+end_src
+
+Currently I have repurposed the ~Not~ operator as my own deref function. It doesn’t offer any of the pros of deref coercion, but it is more concise then calling ~inner()~ every time you need to unbox something. And since it takes ~self~ and not ~&self~, it doesn't run into the lifeitme issues deref does. So when I need to unbox something I can use ~!data~ to achieve this.
+
+#+begin_src rust
+impl<T> Not for Data<T> where Data<T>: Inner<T> {
+    type Output = T;
+    fn not(self) -> Self::Output {
+        self.inner()
+    }
+}
+#+end_src
+
+Another problem with enums is that they leave the unused portion of the allocation uninitialized. This can allow optimizations when the kind is known ahead of time and is smaller then the full enum size. However this also prevents other optimizations from being used.
+
+For example, Emacs provides several different version of the ~equal~ function based on how much work they do. The fastest is ~eq~, which checks if two objects point to the same object. This is specialized to a single word size comparison (1 instruction), because two objects that point to the same object will have the same bit representation. However this optimization is not possible in rust, because part of the enum can be uninitialized, and it is UB to read uninitialized memory. Therefore implementing ~eq~ is much more expensive with a rust enum then it is with a union. This one of the disadvantages of not have control over the layout of your type.
+
+Emacs makes an interesting choice regarding arrays and aliasing. In most? Other dynamic languages when you take a slice of an array, it makes a shallow copy of the array elements. However by default in emacs it takes a pointer to the original array. This means that you can’t modify the size of array in emacs lisp, making them much less useful. As such, most codes opts for the more flexible (but slower) cons cell over the ridged (but faster) vector.
+
+*** Implementation details
+*** Defining functions
+I can’t take credit for this, as the idea came from remacs, but it really showcases the power of rust procedural macros. The ~defun~ macro is applied to any normal rust function and it then becomes callable from lisp.
+
+#+begin_src rust
+  #[defun(name = "-")]
+  pub(crate) fn sub(number: Option<Number>, numbers: &[Number]) -> NumberValue {
+      match number {
+          Some(num) => {
+              let num = num.val();
+              if numbers.is_empty() {
+                  -num
+              } else {
+                  numbers.iter().fold(num, |acc, x| acc - x.val())
+              }
+          }
+          None => Int(0),
+      }
+  }
+#+end_src
+
+This macro creates a wrapper around the function that transforms lisp objects into rust types and back. Also the type signature of the rust function gets converted to the type signature in lisp. ~Option~ types become ~&optional~ and slices become ~&rest~. This makes it easy to use the function in rust or lisp, and the syntax is much cleaner then the DEFUN macro used in the the emacs C code.
+
+*** How does Emacs implement closures?
+My only exposure to closure implementation was in [[https://craftinginterpreters.com/closures.html][crating interpreters]], which I recommend reading. In that section Bob uses an approach from the Lua dev team to implement closures in a single pass compiler. This involves defining new byte code or accessing up values and closing over them. Essentially upvalues are accessed through special heap allocated structures that either point to the value on the stack or, once it is closed, on the heap.
+
+However Emacs has no dedicated byte codes for closures or upvalues. So how does it solve the closure problem? The approach used my emacs is only possible due to it being a multi-pass compiler. Essesentially it does alias analysis to see if the variable is shared with anything outside of the closure. If not, then it will just copy the value into the closure at runtime using the regular function [[https://github.com/emacs-mirror/emacs/blob/dbe0fc234d38511041f16f9d546c439e3e70d0cf/src/alloc.c#L3520][make-closure]]. However, if the variable is shared (remember closures capture variables and not values) then it will box the variable on the heap using a normal cons cell and update all access sites to use this indirection instead of direct access. So upvalues in Emacs are either in the constant vector, or they are in the heap. There is no point at which it moves from one to the other as is does in Lua/lox. This has the advantage of simplifying the runtime and byte code, but means that when a shared variable is captured by a closure it is always accessed indirectly. In Lua, direct acccess (stack references) still work until the variable goes out of scope. It’s an interesting set of trade offs.
+
+*** Fixing lifetime issues
+What I first created objects, they were unions with raw boxed pointers. After all, this is what you would have in C. However, after facing several memory errors, I decided to take advantage of rust lifetime system and add lifetimes to all objects. They now hold a ~PhantomData~ of a reference. When I first made this change it lead to a lot of pain and a lot of learning. I learned it is very valuable to really step back and actually think about borrow checker messages. Oftentimes rather then fighting the borrow checker, you are better off restructuring your code to make it more lifetime friendly. Once I did a major refactor where data flows from main to the rest of the program most of my lifetimes issues just disappeared. Another thing to keep in mind is that just because rust /allows/ your lifetimes does make them /correct/. All that rustc cares about is that your lifetimes are not memory unsafe, it doesn’t care if they are correct. It is up to you as the developer to make sure your lifetimes are actually correct. Most often what I needed to do to correct my lifetimes was to split them up. Forcing rust to unify unrelated lifetimes is guaranteed to cause more pain then needed.
+
+*** Globals vs multi-threaded
+I was initially inspired to this project by crafting interpreters and reading the emacs internals. Both of these programs make heavy use of globals to store and manipulate state, which is very common in C. However rust takes a different stand. In rust there is not such thing as single threaded code. Even code that does not use any concurrency constructs is expected to work without issues in a multi-threaded environment. This means no globals not wrapped in a concurrency safe type.
+
+However I was still convinced that I wanted to do things the "C" way. It made following my templates (lox, emacs) much easier. Accessing a raw global is cheap. Accessing it though a mutex is not. I "knew" that my interpreter was not multi-threaded and I did not want to pay that overhead. However finding out how to implement raw globals was no easy task. Everywhere I looked people told me not to do that (and for good reason). I tried my best to ignore them, and I did discover that you can implement C-style zero-cost globals in rust with some unsafe code. However not too long after I started I began to run into random test failures. I found much to my surprise that even the test runner in rust is multi-threaded! At this point I broke down and decided to get on board with the rust approach to concurrency. I moved all globals to the stack or put them behind a mutex. It wasn’t as bad as I feared.
+
+**** The seeds of parallelism
+As part of my move to concurrency safe runtime it got me thinking about what it would take to have a true multi-threaded emacs lisp. To experiment with this, I set it up so that all symbol functions are shared between threads with atomics. But symbol values are thread local. This brought up some interesting challenges that emacs lisp presents concurrency, all related to mutability and aliasing.
+
+For one, [[https://coredumped.dev/2021/04/07/when-pure-function-lie/][function literals are mutable in lisp]]. This means that you can change a function by mutating it’s return value. I wrote more about this subject here. In Common Lisp, they just say yolo and make doing that undefined behavior. However you can’t easily tell when you are mutating a function literal. It can often be very far from the call site.
+
+Another issue is that aliasing is very common in elisp. This generally isn’t an issue in single-threaded code, but becomes a source of very difficult bugs in a multi-threaded world. You need to either make all objects concurrency safe (which is very expensive) or prevents threads from mutable aliasing each other’s data. This is one of the areas where rust really shines, but would require a lot of hard trade-offs to work in emacs lisp.
+
+For example, concurrency in Emacs would not be very useful without the ability to share buffers. But if you share buffers, you also need a way to share buffer local variables. And buffer local variables can share data (cons cells, strings, and vectors) with other local variables. So there is no way to share a buffer with another thread without also sharing your entire environment. At some point I plan to write more about potential multi-threading in Emacs, but that will have to be saved for a future post.
+
+*** Garbage collection
+I have not currently implemented a garbage collector for my interpreter, Though it doesn't leak memory. This works because all objects are “owned” by an arena, and all the lifetimes of objects are tied to the borrow of the that arena. So when the arena goes out of scope, so do all the objects it owns. This works fine for bootstrapping, but there is no freeing of unused memory. I have done a lot of reading on garbage collectors and they are considered very tricky to get right. As bob nystrom [[http://craftinginterpreters.com/garbage-collection.html#garbage-collection-bugs][said]] “I am going to roll over a rotten log and show you the nasty bugs that live under it, and garbage collector bugs really are some of the grossest invertebrates out there.”
+
+Rust has some unique offerings that promise to not only make garbage collectors easier to implement, but safer to use as well. I am not going to go into detail here because you can find a great overview of different approaches in this [[https://manishearth.github.io/blog/2021/04/05/a-tour-of-safe-tracing-gc-designs-in-rust/][series of blog posts]].
+
+The most interesting crates are the ones that uses rust borrow checker to ensure that I’m that it is safe to run the collector. All objects have a lifetime tied to a ~Context~ object. Anytime the Garbage collector can run it takes a ~&mut~, ensuring all objects it created can't be accessed afterwards. In order to keep objects alive you need to root them. This is either done with stack or linked list of objects. Some examples of this approach are [[https://github.com/asajeffrey/josephine][joesphine]] and [[https://github.com/withoutboats/shifgrethor][shifgrethor]]. One thing is for sure, these libraries will become much easier to use if rust ever gets the ability to track stack roots. But until that time there is still an wide space to be explored.
 ** TODO [#B] compilation mode on steroids
 =compile.el= is a built-in package for Emacs that Let's you run
 compilations in special dedicated mode. For example, if we wanted to
@@ -581,3 +765,43 @@ With org-roam and logseq setup, I can now access my notes anywhere. When I am ar
 [[file:static/images/logseq-screen-shot.png]]
 
 [fn:1] The reason this needs to be changed is because Emacs does not support ordinal dates (1st, 2nd, 3rd, 4th, etc).If you want to add support for ordinal dates, you can follow my config [[https://github.com/CeleritasCelery/emacs.d/blob/master/emacs.org#roam][here]].
+** TODO [#B] Proposal for parallel Emacs
+*** Why making Emacs concurrent is hard
+- Concurrency vs parallel
+- mutate literals
+- mutation everywhere
+- dynamic functions
+- advice
+- flet
+- globals
+*** requirements
+- works in existing code
+- sound
+- easy to debug
+*** proposal
+- goroutines (core.async)
+- copy variables on launch
+- functions are shared globally (mutation)
+- yield values to the main thread
+- multiple calls to objects will send data
+- extension of existing coroutines
+**** why not just use channels?
+- harder to use with existing code
+- more verbose
+**** why use channels?
+- flexible
+- clear
+*** Buffers
+Buffers are shared via mutex. Once you have access to a buffer you can do whatever you need.
+*** Use cases
+- processing shell output in the background
+- building magit buffer sections
+- refresh all buffers
+- search all buffers
+** TODO [#B] closures in Emacs
+My first exposure to implementing closures was in bob nystroms crafting interpreters. For such a simple construct, there is a lot going on under the hood. His implentation is based on Lua's and is clever in the way to adds closures without adding too much overhead. The basic idea is that upvalues are tracked in a seperate data structure that references the stack when the values are "open" (on the stack) and references the heap when the variables are "closed" (off the stack). This is implemented with several additional byte codes that set/get upvalues and one that closes the upvalues at the end of the scope.
+
+That got me thinking, "How does Emacs lisp handle closures?" Emacs does not have any dedicated byte codes for handling upvalues. How does it solve this same problem? What are the trade off's between the Lua way, and the elisp way?
+*** recap of Lua Closures
+*** elisp closures
+*** trade offs
