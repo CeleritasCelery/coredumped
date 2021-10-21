@@ -421,25 +421,25 @@ About a year ago I was bitten by the PL bug. It started with reading [[http://cr
 My goal for this project is to bootstrap [[https://github.com/emacs-mirror/emacs/blob/master/lisp/emacs-lisp/bytecomp.el][bytecomp.el]] and use the Emacs compiler with my bytecode vm using only stable Rust. I have not reached that goal yet, but I have bootstrapped several core Emacs lisp files. At this point I have a enough of an interpreter that I want to share an update and mention some of the trade-offs and other things I have learned.
 *** Overview
 **** Tree walk or bytecode?
-Emacs has 3 seperate execution engines: a tree walk interpreter, a Bytecode VM, and (recently!) native compile. They all provide their own sets of trade-offs, but that also mean that any new feature needs to be implemented up to 3 times. I didn't want the duplicate work, so I opted to only have a byte code VM and no interpreter. This turned out to be harder than I initially thought. All the early elisp files assume that you are using an interpreter. Macros are often used before they are defined because the interpreter has lazy-macro expansion. This is harder for a byte-compiler because you want to expand the macro's at compile time instead of run time. I ended up needing to make some tweaks to the ordering and structure of the [[https://github.com/CeleritasCelery/rune/tree/master/lisp][lisp files]] to support a bytecode-only bootstrap.
+Emacs has 3 seperate execution engines: a tree walk interpreter, a Bytecode VM, and ([[https://git.savannah.gnu.org/gitweb/?p=emacs.git;a=commit;h=289000eee729689b0cf362a21baa40ac7f9506f6][recently!]]) native compile. They all provide their own sets of trade-offs, but that also mean that any new feature needs to be implemented up to 3 times. I didn't want the duplicate work, so I opted to only have a byte code VM and no interpreter. This turned out to be harder than I initially thought. All the early elisp files assume that you are using an interpreter. Macros are often used before they are defined because the interpreter has lazy-macro expansion. This is harder for a byte-compiler because you want to expand the macro's at compile time instead of run time. I ended up needing to make some tweaks to the ordering and structure of the [[https://github.com/CeleritasCelery/rune/tree/master/lisp][lisp files]] to support a bytecode-only bootstrap.
 **** Object representation
-
 A critical part of any dynamic language is how to represent types at runtime. Since you will frequently be boxing and unboxing values, you want these to be both time and space efficient.
 
-Rust provides a strong candidate in its enums, but you are limited to the representations that they provide. Most of the time this isn't a problem. However, because of the language specification that pointers are a full word, you can’t normally use optimizations like [[https://piotrduperas.com/posts/nan-boxing][NaN-boxing]] or [[https://en.wikipedia.org/wiki/Tagged_pointer][pointer tagging]] in Rust. Therefore when I was initially defining an object type, I took the C-style route and defined it as a ~union~.
+Rust provides a strong candidate in its enums, but you are limited to the representations that they provide. Most of the time this isn't a problem. However, because of the language specification that pointers are a full word, you can’t normally use optimizations like [[https://piotrduperas.com/posts/nan-boxing][NaN-boxing]] or [[https://en.wikipedia.org/wiki/Tagged_pointer][pointer tagging]] in Rust. Therefore, when I was initially defining object type as a ~union~.
 #+begin_src rust
-union Object<'ob> {
-    tag: Tag,
-    data: i64,
-}
+  union Object<'ob> {
+      tag: Tag,
+      data: i64,
+      marker: PhantomData<&'ob ()>,
+  }
 #+end_src
 
 Then in the boxing and unboxing code, I could check the type of the tag field and reinterpret the bits as whatever type was needed. This had the advantage of being extremely flexible (since I had complete control over the bit layout and representation) but it also had some drawbacks compared to a proper Rust enum.
 
 1. Unboxing requires ~unsafe~ code
 2. Must manually match the tag to the right data type. There are no compiler checks here.
-3. No way to match directly on the union. Need to create an accessor functions to get the underlying value as an enum.
-4. Can't use variants as values. With an Enum you can use ~Option::None~ or ~Option::Some(T)~ as value, but instead you have to create constants to represent common values.
+3. No way to ~match~ directly on the union. Need to create an accessor functions to get the underlying value as an enum.
+4. Can't use variants as values. With an Enum you can use ~Option::None~ or ~Option::Some(T)~ as values, but instead you have to create constants to represent common values.
 5. No debugger support. A union is completely opaque to the Rust debugger.
 6. No destructuring support. Since Rust's pattern syntax does not understand my type, there is no way to do the following
 #+begin_src rust
@@ -460,7 +460,7 @@ pub struct Data<T> {
 }
 #+end_src
 
-When this is used in an enum the result is a 64 bit object (The same size as a tagged pointer on 64-bit systems).
+When this is used in an enum the result is a 64 bit object (The same size as a tagged pointer on 64-bit systems). [fn:5]
 
 #+begin_src rust
 pub enum Object<'ob> {
@@ -536,12 +536,14 @@ impl<T> Not for Data<T> where Data<T>: Inner<T> {
 }
 #+end_src
 
-Another problem with enums is that they leave the unused portion of the allocation uninitialized. This can allow optimizations when the kind is known ahead of time and is smaller than the full enum size. However this also prevents other optimizations from being used.
+Another problem with enums is that they leave the unused portion of the allocation uninitialized  [fn:6]. This can allow optimizations when the kind is known ahead of time and is smaller than the full enum size. However this also prevents other optimizations from being used.
 
-For example, Emacs provides several different version of the ~equal~ function based on how strict they are. The simplest is ~eq~, which checks if two variables point to the same object. This specializes to a single word size comparison (1 instruction), because two objects that point to the same object will have the same bit representation. unfortunately this optimization is not possible with Rust enums, because part of the enum can be uninitialized, and it is UB to read uninitialized memory. Therefore implementing ~eq~ is much more expensive with a Rust enum then it is with a union. This one of the disadvantages of not have control over the layout of your type.
+For example, Emacs provides several different version of the ~equal~ function based on how strict they are. The simplest is ~eq~, which checks if two variables point to the same object. This specializes to a single word size comparison (1 instruction), because two objects that point to the same object will have the same bit representation. Unfortunately this optimization is not possible with Rust enums, because part of the enum can be uninitialized, and it is UB to read uninitialized memory. Therefore implementing ~eq~ is much more expensive with a Rust enum then it is with a union. This one of the disadvantages of not have control over the layout of your type.
+
+To work around this, I have tried implementing the fieldless variants of my enum as having a field of type ~Data<()>~ which is always zero. This is slightly less ergonomic, but give back the power to compare objects directly by their bit representation.
 
 **** Defining functions
-I can’t take credit for this, as the idea came from [[https://github.com/remacs/remacs/tree/master/rust_src/remacs-macros][remacs]], but it really showcases the power of Rust procedural macros. The ~defun~ macro is applied to any normal Rust function and it then becomes callable from lisp.
+I can’t take credit for this, as the idea came from [[https://github.com/remacs/remacs/tree/master/rust_src/remacs-macros][remacs]] (the original Emacs in Rust project), but it really showcases the power of Rust procedural macros. The ~defun~ macro is applied to any normal Rust function and it then becomes callable from lisp.
 
 #+begin_src rust
   #[defun(name = "-")]
@@ -560,11 +562,11 @@ I can’t take credit for this, as the idea came from [[https://github.com/remac
   }
 #+end_src
 
-This macro creates a wrapper around the function that transforms lisp objects into Rust types and back. The type signature of the Rust function also gets converted to the type signature in lisp. ~Option~ types become ~&optional~ and slices become ~&rest~. This makes it easy to use the function in Rust or lisp, and the syntax is much cleaner then the [[https://github.com/emacs-mirror/emacs/blob/3cabf64131b93e1b0510a01bcce8efde38b20bc4/src/lisp.h#L3050][DEFUN]] macro used in the the Emacs C code.
+This macro creates a wrapper around the function that transforms lisp objects into Rust types and back, handling any type errors along the way. The type signature of the Rust function also gets converted to the type signature in lisp; ~Option~ types become ~&optional~ and slices become ~&rest~. For example the function signature above will become ~(- &optional NUMBER &rest NUMBERS)~.This makes it easy to use the function in Rust or lisp, and the syntax is much cleaner then the [[https://github.com/emacs-mirror/emacs/blob/3cabf64131b93e1b0510a01bcce8efde38b20bc4/src/lisp.h#L3050][DEFUN]] macro used in the the Emacs C code.
 
 *** Interesting learnings along the way
 **** Generics in Rust
-Generics are a really powerful feature that let you build reusable data structures and help eliminate some boilerplate. Less code means less bugs. Generics are particular useful in conjunction with traits, letting you implement them for a range of types. However, I found that in practice generics were less useful than they could have been due to the lack of [[https://rust-lang.github.io/rfcs/1210-impl-specialization.html][specialization]]. This absence means that anytime you need to specialize for one type you completely lose the use of generics for that function/trait. Because of this I ended up implementing many of the traits with macros instead of generics. If specialization is ever stabilized, it will remove hundreds of lines of boilerplate from the code base. But it looks like that is still a [[https://aturon.github.io/blog/2017/07/08/lifetime-dispatch/][ways off]].
+Generics are a really powerful feature that let you build reusable data structures and help eliminate some boilerplate. Less code means less bugs. Generics are particular useful in conjunction with traits, letting you implement them for a range of types. However, I found that in practice generics were less useful than they could have been due to the lack of [[https://rust-lang.github.io/rfcs/1210-impl-specialization.html][specialization]]. This absence means that anytime you need to specialize for one type you completely lose the use of generics for that function/trait [fn:7]. Because of this I ended up implementing many of the traits with macros instead of generics. If specialization is ever stabilized, it will remove hundreds of lines of boilerplate from the code base. But it looks like that is still a [[https://aturon.github.io/blog/2017/07/08/lifetime-dispatch/][ways off]].
 
 **** Garbage collection
 I have not currently implemented a garbage collector for my interpreter, though it doesn't leak memory. This works because all objects are “owned” by an arena, and all the lifetimes of objects are tied to the borrow of the that arena. So when the arena goes out of scope, so do all the objects it owns. This works fine for bootstrapping, but there is no freeing of unused memory. I have done a lot of reading on garbage collectors and they are considered very tricky to get right. As Bob Nystrom [[http://craftinginterpreters.com/garbage-collection.html#garbage-collection-bugs][said]], “garbage collector bugs really are some of the grossest invertebrates out there.”
@@ -595,26 +597,32 @@ Another issue is that aliasing is very common in elisp. This generally isn’t a
 For example, concurrency in Emacs would not be very useful without the ability to share buffers. If you share buffers, you also need a way to share buffer local variables; and buffer local variables can share data (cons cells, strings, and vectors) with other local variables. There is no way to share a buffer with another thread without also sharing your entire environment. At some point I plan to write more about potential multi-threading in Emacs, but that will have to be saved for a future post.
 
 *** Rust as a language backend
-Overall, I have come to love Rust! It makes systems programming feel accessible. And the community is absolutely awesome [fn:2]. I've never had a question that I was not able to get help with. That being said, implementing an interpreter for a dynamic language in Rust is particularly challenging because the host language does not[fn:3] follow Rust's rules around mutability and aliasing. To solve this you need to either do runtime accounting using ~Rc<RefCell<T>>~ (which is very expensive), or deal with upholding all of Rust invariants manually in unsafe code. Neither is a very attractive proposition.
+Overall, I have come to love Rust! It makes systems programming feel accessible. And the community is absolutely awesome [fn:2]. I've never had a question that I was not able to get help with. That being said, implementing an interpreter for a dynamic language in Rust is particularly challenging because the host language does not[fn:3] follow Rust's rules around mutability and aliasing. To solve this you need to either do runtime accounting using ~Rc<RefCell<T>>~ (which is expensive and leaks cycles), or deal with upholding all of Rust invariants manually in unsafe code. Neither is a very attractive proposition.
 
 Speaking of unsafe, you often hear that writing unsafe code is "just like writing C". That is not really true. Rust has more invariants that need to be upheld then does C, especially related to mutability, aliasing, traits, layout, initialization, and dropping. All these invariants need to be considered when writing unsafe code and can lead to [[https://www.youtube.com/playlist?list=PLqbS7AVVErFj1t4kWrS5vfvmHpJ0bIPio][very tricky unsound behavior]]. Many of these are either not a concern, or much less of a concern, in correct C code.
 
-Rust also lacks a feature of C that is used to implement fast interpreter loops; [[https://eli.thegreenplace.net/2012/07/12/computed-goto-for-efficient-dispatch-tables][computed goto]]. This feature can be used to implement [[https://en.wikipedia.org/wiki/Threaded_code#Direct_threading][direct threading]] without the need for assembly code, giving a sizable [[http://www.cs.toronto.edu/~matz/dissertation/matzDissertation-latex2html/node6.html][performance]] increase on some processors[fn:4]. Rust may support this in the future, but given the complex interactions this would have with the borrow checker, I doubt it.
+Rust also lacks a feature of C that is used to implement fast interpreter loops; [[https://eli.thegreenplace.net/2012/07/12/computed-goto-for-efficient-dispatch-tables][computed goto]]. This feature can be used to implement [[https://en.wikipedia.org/wiki/Threaded_code#Direct_threading][direct threading]] without the need for assembly code, giving a sizable [[http://www.cs.toronto.edu/~matz/dissertation/matzDissertation-latex2html/node6.html][performance]] increase on some processors[fn:4]. Rust may support this in the future, but given the complex interactions this would have with the borrow checker, I doubt it. I could see future where fast Rust interpreters write their inner dispatch loop in C just to take advantage of this feature.
 
 Now, none of this is to say that Rust is poor language for writing a dynamic language backend. On the contrary, it offers some features like sum types, unnullable pointers, and safety from concurrent data races that are really powerful.  However, some of Rust's core strengths in aliasing and mutability apply less well to this domain then they do to others.
 
 *** Conclusion
 I really gained an appreciation for the depth of the Emacs internals. That code has been around for a long time and is very mature; but at the same time, it is also under active development. Trying to implement Emacs from scratch would mean not only matching the current well-tested functionality, but also trying to keep up with the constantly changing internals. While Emacs may not be the most elegant C code base, it is certainly robust.
 
-As for how long I plan to continue this project, I don't really know. At very least I want to bootstrap the Emacs lisp compiler and test it against my runtime. My hope is either that I will learn enough about text-editors and interpreters to be able to contribute to Emacs proper, or I will find a problem in the Rust ecosystem that does not have a good solution and focus on that instead. Or I may continue to see how far I can push this project. Either way, contributions and testing are welcome. Please take a look at the [[https://github.com/CeleritasCelery/rune][code]] and give feedback. I am particularly interested in anything that could be unsound or lead to undefined behavior. This has been a great experience and I am learning more than I could have hoped.
+As for how long I plan to continue this project, I don't really know. At very least I am going to bootstrap the Emacs lisp compiler to test it against my runtime and implement a garbage collector. My expectation is either that I will learn enough about text-editors and interpreters to be able to contribute to Emacs proper, or I will find a problem in the Rust ecosystem that does not have a good solution and focus on that instead. Or I may continue to see how far I can push this project. Either way, contributions and testing are welcome. Please take a look at the [[https://github.com/CeleritasCelery/rune][code]] and give feedback. I am particularly interested in anything that could be unsound or lead to undefined behavior. This has been a great experience and I am learning more than I could have hoped.
 
 [fn:1] LLVM has support for this, but is has not been moved into Rust yet.
 
 [fn:2] That is, so long as you don't use a trigger phrase like "unsafe code" or "this works fine in C".
 
-[fn:3] I saw some claims that using threaded dispatch in CPython brought a 10-20% improvement, but I didn't see benchmarks.
+[fn:3] Some functional languages do have invariants around immutability, but they often use mutability under the hood.
 
-[fn:4] Some functional languages do have invariants around immutability, but they often use mutability under the hood.
+[fn:4] I saw some claims that using threaded dispatch in CPython brought a 10-20% improvement, but I didn't see benchmarks.
+
+[fn:5] As an added bonus converting between objects can be a no-op with the [[https://github.com/rust-lang/rust/issues/60553][arbitrary_enum_discriminant]] feature that was set to make it into 1.56. Unfortunately this was [[https://github.com/rust-lang/rust/pull/89884][recently reverted]].
+
+[fn:6] For an example of how subtle UB can happen with enums see [[https://github.com/crossbeam-rs/crossbeam/issues/748][this crossbeam issue]].
+
+[fn:7] This [[https://github.com/rust-lang/rust/issues/50133][issue]] shows how a seemingly innocent blanket implementation in the core can break a bunch of generics for all users due to no specialization.
 
 ** TODO [#B] compilation mode on steroids
 =compile.el= is a built-in package for Emacs that Let's you run
