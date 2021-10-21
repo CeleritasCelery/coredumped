@@ -410,9 +410,9 @@ View the discussion on [[https://www.reddit.com/r/emacs/comments/mm70re/when_pur
 
 [fn:1] As several people [[https://www.reddit.com/r/emacs/comments/mm70re/when_pure_functions_lie/gtq1oir?utm_source=share&utm_medium=web2x&context=3][pointed out]], the reason this works in python is because it is making a copy of the list every time it returns. You could introduce the same issue in python using default arguments, which are not copied. To protect against this in lisp, you can use ~(vector 1 2 3)~ instead of ~'(1 2 3)~ and it will make a copy of the vector.
 
-** TODO [#B] Building an Emacs lisp VM in Rust :emacs:rust:
+** DONE [#B] Building an Emacs lisp VM in Rust :emacs:rust:
 :PROPERTIES:
-:EXPORT_DATE: 2021-09-21
+:EXPORT_DATE: 2021-10-21
 :EXPORT_FILE_NAME: building-an-emacs-lisp-vm-in-rust
 :END:
 
