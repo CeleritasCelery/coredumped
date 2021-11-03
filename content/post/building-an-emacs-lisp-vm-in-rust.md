@@ -230,6 +230,11 @@ I really gained an appreciation for the depth of the Emacs internals. That code 
 
 As for how long I plan to continue this project, I don't really know. At very least I am going to bootstrap the Emacs lisp compiler to test it against my runtime and implement a garbage collector. My expectation is either that I will learn enough about text-editors and interpreters to be able to contribute to Emacs proper, or I will find a problem in the Rust ecosystem that does not have a good solution and focus on that instead. Or I may continue to see how far I can push this project. Either way, contributions and testing are welcome. Please take a look at the [code](https://github.com/CeleritasCelery/rune) and give feedback. I am particularly interested in anything that could be unsound or lead to undefined behavior. This has been a great experience and I am learning more than I could have hoped.
 
+
+### Have a comment? {#have-a-comment}
+
+View the discussion on [Reddit](https://www.reddit.com/r/emacs/comments/qcus3f/building%5Fan%5Femacs%5Flisp%5Fvirtual%5Fmachine%5Fin%5Frust/?utm%5Fsource=share&utm%5Fmedium=web2x&context=3), [Hacker News](https://news.ycombinator.com/item?id=29038140), or send me an email
+
 [^fn:1]: As an added bonus converting between objects can be a no-op with the [arbitrary\_enum\_discriminant](https://github.com/rust-lang/rust/issues/60553) feature that was set to make it into 1.56. Unfortunately this was [recently reverted](https://github.com/rust-lang/rust/pull/89884).
 [^fn:2]: For an example of how subtle UB can happen with enums see [this crossbeam issue](https://github.com/crossbeam-rs/crossbeam/issues/748).
 [^fn:3]: This [issue](https://github.com/rust-lang/rust/issues/50133) shows how a seemingly innocent blanket implementation in the core can break a bunch of generics for all users due to no specialization.

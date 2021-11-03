@@ -610,6 +610,9 @@ I really gained an appreciation for the depth of the Emacs internals. That code 
 
 As for how long I plan to continue this project, I don't really know. At very least I am going to bootstrap the Emacs lisp compiler to test it against my runtime and implement a garbage collector. My expectation is either that I will learn enough about text-editors and interpreters to be able to contribute to Emacs proper, or I will find a problem in the Rust ecosystem that does not have a good solution and focus on that instead. Or I may continue to see how far I can push this project. Either way, contributions and testing are welcome. Please take a look at the [[https://github.com/CeleritasCelery/rune][code]] and give feedback. I am particularly interested in anything that could be unsound or lead to undefined behavior. This has been a great experience and I am learning more than I could have hoped.
 
+**** Have a comment?
+View the discussion on [[https://www.reddit.com/r/emacs/comments/qcus3f/building_an_emacs_lisp_virtual_machine_in_rust/?utm_source=share&utm_medium=web2x&context=3][Reddit]], [[https://news.ycombinator.com/item?id=29038140][Hacker News]], or send me an email
+
 [fn:1] LLVM has support for this, but is has not been moved into Rust yet.
 
 [fn:2] That is, so long as you don't use a trigger phrase like "unsafe code" or "this works fine in C".
