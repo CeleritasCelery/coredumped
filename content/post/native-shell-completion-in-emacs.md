@@ -30,7 +30,7 @@ It works in the terminal but not in the Emacs shell. What conspiracy is this? Tu
 
 However removing that still does not enable tab completion. There must be something else going on here. This time it is on the bash side. Looking in the source code we see the follow block.
 
-{{< highlight c "hl_lines=21" >}}
+```c { hl_lines=["21"] }
 term = get_string_value ("TERM");
 emacs = get_string_value ("EMACS");
 inside_emacs = get_string_value ("INSIDE_EMACS");
@@ -52,7 +52,7 @@ if (inside_emacs)
 /* Not sure any emacs terminal emulator sets TERM=emacs any more */
 no_line_editing |= STREQ (term, "emacs");
 no_line_editing |= in_emacs && STREQ (term, "dumb");
-{{< /highlight >}}
+```
 
 For some reason that I can't explain, bash has special code for running inside Emacs. Lo and behold, if `$TERM` is `dumb` and `$INSIDE_EMACS` is set, then line editing is disabled by the shell itself. Any reason for this? I would love to know. Changing `$TERM` to something other then `dumb` fixes the issue, but then programs might not interpret our terminals capabilities correct. The best thing to do is remove the environment variable `$INSIDE_EMACS`. Doesn't seem to do anything useful after all.
 
@@ -73,4 +73,4 @@ I hope this is the shell-mode completion Endgame. I don't think I can take much 
 
 ### Have a comment? {#have-a-comment}
 
-View the discussion on [Reddit](https://www.reddit.com/r/emacs/comments/ek8v0e/native%5Fshell%5Fcompletion%5Fin%5Femacs/?utm%5Fsource=share&utm%5Fmedium=web2x&context=3) or send me an email
+View the discussion on [Reddit](https://www.reddit.com/r/emacs/comments/ek8v0e/native_shell_completion_in_emacs/?utm_source=share&utm_medium=web2x&context=3) or send me an email

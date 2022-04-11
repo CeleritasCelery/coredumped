@@ -27,20 +27,20 @@ The process I use to write my email with `org-mode` is as follows
 
 Using an org capture buffer is perfect for writing email, because I can save it as a draft if needed, or export the contents and then throw the buffer away. Also, most of the time, the content of interest is what I am working on that moment, so I have everything at hand. Here is the simple template that I use to write emails.
 
-{{< highlight emacs-lisp "linenos=table, linenostart=1" >}}
+```emacs-lisp { linenos=table, linenostart=1 }
 (add-to-list
  'org-capture-templates
  '("e" "Email"
    entry (expand-file-name "email.org" org-directory)
    "* %?" :empty-lines 1))
-{{< /highlight >}}
+```
 
 
 ### Exporting from org-mode {#exporting-from-org-mode}
 
 Normally if you wanted to export an org header as HTML, you would use `C-c C-e` to open the export menu. `hH` will open a dedicated buffer with the HTML contents of your org file. From there you can copy the whole buffer. However I find it much faster to use this helper function (bound to `C-x M-e`).
 
-{{< highlight emacs-lisp "linenos=table, linenostart=6" >}}
+```emacs-lisp { linenos=table, linenostart=6 }
 (defun export-org-email ()
   "Export the current email org buffer and copy it to the
 clipboard"
@@ -51,7 +51,7 @@ clipboard"
     (with-current-buffer "*Org HTML Export*"
       (kill-new (buffer-string)))
     (message "HTML copied to clipboard")))
-{{< /highlight >}}
+```
 
 
 ### Better CSS for export {#better-css-for-export}
@@ -60,7 +60,7 @@ The default HTML exported by org is spartan to say the least. Thankfully it is p
 
 As you can see in the function below, I have this CSS at the local path `~/org/org-html-themes/styles/email/css/email.css`. You will need to change this to where ever you keep the CSS file.
 
-{{< highlight emacs-lisp "linenos=table, linenostart=16" >}}
+```emacs-lisp { linenos=table, linenostart=16 }
 (defun org-email-html-head ()
   "Create the header with CSS for use with email"
   (concat
@@ -72,7 +72,7 @@ As you can see in the function below, I have this CSS at the local path `~/org/o
      (buffer-string))
    "/*]]>*/-->\n"
    "</style>\n"))
-{{< /highlight >}}
+```
 
 
 ## setting up outlook {#setting-up-outlook}
@@ -109,7 +109,7 @@ End Sub
 
 ### Fix object library {#fix-object-library}
 
-This step may not apply to everyone, but in order to get this to work, I also had to add the `Microsoft Forms 2.0 Object Library` to the References. I figured this out by looking at [this](https://www.reddit.com/r/orgmode/comments/74k2mx/org%5Flink%5Fto%5Fmessage%5Fwithin%5Foutlook%5F2016/) Reddit thread.
+This step may not apply to everyone, but in order to get this to work, I also had to add the `Microsoft Forms 2.0 Object Library` to the References. I figured this out by looking at [this](https://www.reddit.com/r/orgmode/comments/74k2mx/org_link_to_message_within_outlook_2016/) Reddit thread.
 
 1.  Click on `Tools` in the menu bar (or use `Alt-t`).
 2.  Select `References...`
@@ -137,7 +137,7 @@ The other bonus (or maybe the main point) is that now you can also use a built-i
 
 It is nice sometimes to have the default font in outlook match what you are exporting from org mode. To make this happen, do the following steps in Outlook.
 
-1.  On the `File` tab, choose `Options` > `Mail`.
+1.  On the `File` tab, choose `Options` &gt; `Mail`.
 2.  Under `Compose messages`, choose `Stationery and Fonts`.
 3.  On the `Personal Stationery` tab, under `New mail messages` or `Replying or forwarding messages`, choose Font.
 4.  In the `Font` box, choose the font, style, size, and color that you want to use. You can see a preview of your changes as you make them.
@@ -271,4 +271,4 @@ that region."
 
 ### Have a comment? {#have-a-comment}
 
-View the discussion on [Reddit](https://www.reddit.com/r/emacs/comments/gxrg0b/writing%5Femail%5Ffor%5Foutlook%5Finside%5Femacs/?utm%5Fsource=share&utm%5Fmedium=web2x&context=3) or send me an email
+View the discussion on [Reddit](https://www.reddit.com/r/emacs/comments/gxrg0b/writing_email_for_outlook_inside_emacs/?utm_source=share&utm_medium=web2x&context=3) or send me an email

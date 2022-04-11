@@ -23,7 +23,7 @@ Emacs has 3 seperate execution engines: a tree walk interpreter, a Bytecode VM, 
 
 A critical part of any dynamic language is how to represent types at runtime. Since you will frequently be boxing and unboxing values, you want these to be both time and space efficient.
 
-Rust provides a strong candidate in its enums, but you are limited to the representations that they provide. Most of the time this isn't a problem. However, because of the language specification that pointers are a full word, you can’t normally use optimizations like [NaN-boxing](https://piotrduperas.com/posts/nan-boxing) or [pointer tagging](https://en.wikipedia.org/wiki/Tagged%5Fpointer) in Rust. Therefore, when I was initially defining object type as a `union`.
+Rust provides a strong candidate in its enums, but you are limited to the representations that they provide. Most of the time this isn't a problem. However, because of the language specification that pointers are a full word, you can’t normally use optimizations like [NaN-boxing](https://piotrduperas.com/posts/nan-boxing) or [pointer tagging](https://en.wikipedia.org/wiki/Tagged_pointer) in Rust. Therefore, when I was initially defining object type as a `union`.
 
 ```rust
 union Object<'ob> {
@@ -147,7 +147,7 @@ To work around this, I have tried implementing the fieldless variants of my enum
 
 ### Defining functions {#defining-functions}
 
-I can’t take credit for this, as the idea came from [remacs](https://github.com/remacs/remacs/tree/master/rust%5Fsrc/remacs-macros) (the original Emacs in Rust project), but it really showcases the power of Rust procedural macros. The `defun` macro is applied to any normal Rust function and it then becomes callable from lisp.
+I can’t take credit for this, as the idea came from [remacs](https://github.com/remacs/remacs/tree/master/rust_src/remacs-macros) (the original Emacs in Rust project), but it really showcases the power of Rust procedural macros. The `defun` macro is applied to any normal Rust function and it then becomes callable from lisp.
 
 ```rust
 #[defun(name = "-")]
@@ -219,7 +219,7 @@ Overall, I have come to love Rust! It makes systems programming feel accessible.
 
 Speaking of unsafe, you often hear that writing unsafe code is "just like writing C". That is not really true. Rust has more invariants that need to be upheld then does C, especially related to mutability, aliasing, traits, layout, initialization, and dropping. All these invariants need to be considered when writing unsafe code and can lead to [very tricky unsound behavior](https://www.youtube.com/playlist?list=PLqbS7AVVErFj1t4kWrS5vfvmHpJ0bIPio). Many of these are either not a concern, or much less of a concern, in correct C code.
 
-Rust also lacks a feature of C that is used to implement fast interpreter loops; [computed goto](https://eli.thegreenplace.net/2012/07/12/computed-goto-for-efficient-dispatch-tables). This feature can be used to implement [direct threading](https://en.wikipedia.org/wiki/Threaded%5Fcode#Direct%5Fthreading) without the need for assembly code, giving a sizable [performance](http://www.cs.toronto.edu/~matz/dissertation/matzDissertation-latex2html/node6.html) increase on some processors[^fn:7]. Rust may support this in the future, but given the complex interactions this would have with the borrow checker, I doubt it. I could see future where fast Rust interpreters write their inner dispatch loop in C just to take advantage of this feature.
+Rust also lacks a feature of C that is used to implement fast interpreter loops; [computed goto](https://eli.thegreenplace.net/2012/07/12/computed-goto-for-efficient-dispatch-tables). This feature can be used to implement [direct threading](https://en.wikipedia.org/wiki/Threaded_code#Direct_threading) without the need for assembly code, giving a sizable [performance](http://www.cs.toronto.edu/~matz/dissertation/matzDissertation-latex2html/node6.html) increase on some processors[^fn:7]. Rust may support this in the future, but given the complex interactions this would have with the borrow checker, I doubt it. I could see future where fast Rust interpreters write their inner dispatch loop in C just to take advantage of this feature.
 
 Now, none of this is to say that Rust is poor language for writing a dynamic language backend. On the contrary, it offers some features like sum types, unnullable pointers, and safety from concurrent data races that are really powerful.  However, some of Rust's core strengths in aliasing and mutability apply less well to this domain then they do to others.
 
@@ -233,9 +233,9 @@ As for how long I plan to continue this project, I don't really know. At very le
 
 ### Have a comment? {#have-a-comment}
 
-View the discussion on [Reddit](https://www.reddit.com/r/emacs/comments/qcus3f/building%5Fan%5Femacs%5Flisp%5Fvirtual%5Fmachine%5Fin%5Frust/?utm%5Fsource=share&utm%5Fmedium=web2x&context=3), [Hacker News](https://news.ycombinator.com/item?id=29038140), or send me an email
+View the discussion on [Reddit](https://www.reddit.com/r/emacs/comments/qcus3f/building_an_emacs_lisp_virtual_machine_in_rust/?utm_source=share&utm_medium=web2x&context=3), [Hacker News](https://news.ycombinator.com/item?id=29038140), or send me an email
 
-[^fn:1]: As an added bonus converting between objects can be a no-op with the [arbitrary\_enum\_discriminant](https://github.com/rust-lang/rust/issues/60553) feature that was set to make it into 1.56. Unfortunately this was [recently reverted](https://github.com/rust-lang/rust/pull/89884).
+[^fn:1]: As an added bonus converting between objects can be a no-op with the [arbitrary_enum_discriminant](https://github.com/rust-lang/rust/issues/60553) feature that was set to make it into 1.56. Unfortunately this was [recently reverted](https://github.com/rust-lang/rust/pull/89884).
 [^fn:2]: For an example of how subtle UB can happen with enums see [this crossbeam issue](https://github.com/crossbeam-rs/crossbeam/issues/748).
 [^fn:3]: This [issue](https://github.com/rust-lang/rust/issues/50133) shows how a seemingly innocent blanket implementation in the core can break a bunch of generics for all users due to no specialization.
 [^fn:4]: LLVM has support for this, but is has not been moved into Rust yet.

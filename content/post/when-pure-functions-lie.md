@@ -34,7 +34,7 @@ How can this be? Well it turns out that constant literals in lisp (common lisp, 
 (foo) => "福oo"
 ```
 
-Look at that! We have modified the behavior of another function using only its return value. We might have considered `foo` a [pure function](https://en.wikipedia.org/wiki/Pure%5Ffunction). However this cannot be the case because we can return different values for the same input.
+Look at that! We have modified the behavior of another function using only its return value. We might have considered `foo` a [pure function](https://en.wikipedia.org/wiki/Pure_function). However this cannot be the case because we can return different values for the same input.
 
 This is true whether it's dynamic or lexically bound, interpreted or byte compiled. And there is no way to get the original literal value back without redefining the function. Which means that once you try and instrument the function to see what is going on, the problem magically goes away! Here is another example where we are able to change a different constant literal in the same function. Since `foo` is byte-compiled, the two constants are mapped to the same mutable object. So changing one changes the other!
 
@@ -99,6 +99,6 @@ When I first saw this behavior, I thought for sure that I found a bug in the lan
 
 ### Have a comment? {#have-a-comment}
 
-View the discussion on [Reddit](https://www.reddit.com/r/emacs/comments/mm70re/when%5Fpure%5Ffunctions%5Flie/?utm%5Fsource=share&utm%5Fmedium=web2x&context=3) or send me an email
+View the discussion on [Reddit](https://www.reddit.com/r/emacs/comments/mm70re/when_pure_functions_lie/?utm_source=share&utm_medium=web2x&context=3) or send me an email
 
-[^fn:1]: As several people [pointed out](https://www.reddit.com/r/emacs/comments/mm70re/when%5Fpure%5Ffunctions%5Flie/gtq1oir?utm%5Fsource=share&utm%5Fmedium=web2x&context=3), the reason this works in python is because it is making a copy of the list every time it returns. You could introduce the same issue in python using default arguments, which are not copied. To protect against this in lisp, you can use `(vector 1 2 3)` instead of `'(1 2 3)` and it will make a copy of the vector.
+[^fn:1]: As several people [pointed out](https://www.reddit.com/r/emacs/comments/mm70re/when_pure_functions_lie/gtq1oir?utm_source=share&utm_medium=web2x&context=3), the reason this works in python is because it is making a copy of the list every time it returns. You could introduce the same issue in python using default arguments, which are not copied. To protect against this in lisp, you can use `(vector 1 2 3)` instead of `'(1 2 3)` and it will make a copy of the vector.
