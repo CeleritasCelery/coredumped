@@ -225,7 +225,7 @@ I am going to continue work on bootstrapping more elisp files to eventually boot
 
 ### Have a comment? {#have-a-comment}
 
-send me an [email](mailto:troy.hinckley@dabrev.com) or open an [issue](https://github.com/CeleritasCelery/rune/issues/new).
+View the discussion on [reddit](https://www.reddit.com/r/rust/comments/u21w97/implementing_a_safe_garbage_collector_in_rust/), send me an [email](mailto:troy.hinckley@dabrev.com), or open an [issue](https://github.com/CeleritasCelery/rune/issues/new).
 
 [^fn:1]: Why is reference counting slow? There is a lot that goes into it, but it boils down to three main issues:
 

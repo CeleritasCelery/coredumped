@@ -1001,7 +1001,7 @@ Overall, I am pretty happy with how it turned out. That being said, there is *a 
 I am going to continue work on bootstrapping more elisp files to eventually bootstrap the elisp byte compiler and use that to test my VM. I was forced to take break from that effort and implement the garbage collector because I kept using too much memory! Implementing the garbage collector was a much bigger rabbit hole than I expected. Hopefully this will help move the community forward on the quest for a Rust GC.
 
 ****  Have a comment?
-send me an [[mailto:troy.hinckley@dabrev.com][email]] or open an [[https://github.com/CeleritasCelery/rune/issues/new][issue]].
+View the discussion on [[https://www.reddit.com/r/rust/comments/u21w97/implementing_a_safe_garbage_collector_in_rust/][reddit]], send me an [[mailto:troy.hinckley@dabrev.com][email]], or open an [[https://github.com/CeleritasCelery/rune/issues/new][issue]].
 
 [fn:4] Actually I am using a fork of [[https://github.com/CeleritasCelery/rune/blob/master/src/arena/cell.rs][LCell]] that uses the [[https://crates.io/crates/generativity][generativity]] crate to avoid the requirement of putting everything in closures. But the principle is the same.
 [fn:5] Why is reference counting slow? There is a lot that goes into it, but it boils down to three main issues:
