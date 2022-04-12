@@ -11,7 +11,7 @@ In my [last post](https://coredumped.dev/2021/10/21/building-an-emacs-lisp-vm-in
 
 ## Why use garbage collection? {#why-use-garbage-collection}
 
-virtually all non-trivial programs need some way to reuse memory. Rust does this by tracking every allocation statically to determine when it's no longer in use. However, this system is not flexible enough for some applications. In these cases Rust gives you [Rc](https://doc.rust-lang.org/std/rc/struct.Rc.html), the reference counting cell. This cell tracks the number of owners of a piece of memory at runtime. Reference counting has the advantage that is relatively easy to implement and integrates seamlessly with non-rc code. However, it also has two big downsides: It's slow[^fn:1] and it can't detect cyclic data (which lisp is full of). For these reasons (and others) dynamic languages often use garbage collection (GC) to manage data.
+virtually all non-trivial programs need some way to reuse memory. Rust does this by tracking every allocation statically to determine when it's no longer in use. However, this system is not flexible enough for some applications. In these cases Rust gives you [Rc](https://doc.rust-lang.org/std/rc/struct.Rc.html), the reference counting cell. This cell tracks the number of owners of a piece of memory at runtime. Reference counting has the advantage that is relatively easy to implement and integrates seamlessly with non-rc code. However, it also has two big downsides: It's slower[^fn:1] and it can't detect cyclic data (which lisp is full of). For these reasons (and others) dynamic languages often use garbage collection (GC) to manage data.
 
 
 ## Why is GC hard? {#why-is-gc-hard}
@@ -227,7 +227,7 @@ I am going to continue work on bootstrapping more elisp files to eventually boot
 
 View the discussion on [reddit](https://www.reddit.com/r/rust/comments/u21w97/implementing_a_safe_garbage_collector_in_rust/), send me an [email](mailto:troy.hinckley@dabrev.com), or open an [issue](https://github.com/CeleritasCelery/rune/issues/new).
 
-[^fn:1]: Why is reference counting slow? There is a lot that goes into it, but it boils down to three main issues:
+[^fn:1]: Why is reference counting slower then garbage collection? There is a lot that goes into it, but it boils down to three main issues:
 
     1.  Reference counting turns all reads (which are cheap) into writes (which are more expensive). This is because we need to update the count on every read.
     2.  RC can fall victim to "destructor avalanche" when the root of a chain of objects goes out of scope.  This results in unbounded pause times. Modern GC's by contrast are usually incremental, and will do work in small chunks to preventing long pauses.
