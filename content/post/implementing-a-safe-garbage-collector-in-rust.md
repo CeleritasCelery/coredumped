@@ -176,7 +176,7 @@ Actually there is a way `UnsafeCell` can help us here. There is one legal way in
 
 ### Qcell to the rescue {#qcell-to-the-rescue}
 
-[Qcell](https://docs.rs/qcell/latest/qcell/index.html) is a crate trying to design a compile time `RefCell`. It makes a bunch of different cell types, each with their own set of trade off, that give you exactly that. We are going to use [LCell](https://docs.rs/qcell/latest/qcell/struct.LCell.html)[^fn:3], which is zero cost and perfect for our use case. With this type, multiple cells have a shared owner that control when a cell can be borrowed mutable or immutable. To make this safe we define the following conditions:
+[Qcell](https://docs.rs/qcell/latest/qcell/index.html) is a crate trying to design a compile time `RefCell`. It makes a bunch of different cell types, each with their own set of trade off, that give you exactly that. We are going to use [LCell](https://docs.rs/qcell/latest/qcell/struct.LCell.html), which is zero cost and perfect for our use case. With this type, multiple cells have a shared owner that control when a cell can be borrowed mutable or immutable. To make this safe we define the following conditions:
 
 1.  We can borrow a `Root` as immutable if we have a `&RootOwner`.
 2.  We can borrow a `Root` as mutable if we have a `&mut RootOwner` **and** we have a `&Arena`. This ensures that we can never call garbage collect while our mutable reference is live, because garbage collect requires a mutable borrow of `Arena`!
@@ -214,7 +214,7 @@ my_struct.borrow_mut(&mut root_owner, &arena).push(object);
 
 ## A Safe GC {#a-safe-gc}
 
-So there you have it! A safe, precise, garbage collector in stable Rust! Now, this comes with a few caveats. It is often said that solving a general problem is three times harder then solving a specific problem. I am solving the specific problem here; creating a GC for my VM. This not ready to ship as a general purpose library without more work. But I am confident it could be made into a library if needed. Right now the garbage collector is about as naive as possible. It traces things recursively (which could stackoverflow on large heaps) and can't handle cycles. But these are all pretty simple under-the-hood improvements that don't change the API.
+So there you have it! A safe, precise, garbage collector in stable Rust! Now, this comes with a few caveats. It is often said that solving a general problem is three times harder then solving a specific problem. I am solving the specific problem here; creating a GC for my VM. This not ready to ship as a general purpose library without more work. But I am confident it could be made into a library if needed. Right now the garbage collector is about as naive as possible. But future changes will be under-the-hood improvements that don't change the API.
 
 What I think is really cool is that the API is **safe**! You can't create this in `C`  or `C++`; The type system is not powerful enough. Rust enables us to have "fearless garbage collection", and no longer be scared of the "nasty bugs" that we might create. As an anecdote, I was pleasantly surprised to find that when I turned on reclaiming memory in my gc, everything just worked first time; No memory leaks, no use-after-free. The API just took care of it at compile time. Miri was satisfied as well.
 
@@ -234,4 +234,3 @@ View the discussion on [reddit](https://www.reddit.com/r/rust/comments/u21w97/im
 
     With all of these issues, there are techniques to try and mitigate them and get some performance back. But even a naive GC can often beat a well optimized RC implementation. And optimized GC (like JVM or V8) will always outclass reference counting. See [this SO post](https://softwareengineering.stackexchange.com/questions/30254/why-garbage-collection-if-smart-pointers-are-there) and [follow up post](https://web.archive.org/web/20200325094430/http://flyingfrogblog.blogspot.com/2010/12/why-gc-when-you-have-reference-counted.html) for more.
 [^fn:2]: I don't think this is true in Rust though. My best guess is that scanning the stack would violate some of rust's aliasing rules and be UB.
-[^fn:3]: Actually I am using a fork of [LCell](https://github.com/CeleritasCelery/rune/blob/master/src/arena/cell.rs) that uses the [generativity](https://crates.io/crates/generativity) crate to avoid the requirement of putting everything in closures. But the principle is the same.
