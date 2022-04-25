@@ -1,15 +1,3 @@
-[submodule "themes/ananke"]
-	path = themes/ananke
-	url = https://github.com/budparr/gohugo-theme-ananke.git
-[submodule "themes/m10c"]
-	path = themes/m10c
-	url = https://github.com/vaga/hugo-theme-m10c.git
-[submodule "hyde-y"]
-	path = themes/hyde-y
-	url = https://github.com/CeleritasCelery/hyde-y.git
-[submodule "themes/hugo-theme-learn"]
-	path = themes/hugo-theme-learn
-	url = https://github.com/matcornic/hugo-theme-learn.git
 [submodule "hyde-hyde"]
 	path = themes/hyde-hyde
-	url = https://github.com/htr3n/hyde-hyde.git
+	url = https://github.com/CeleritasCelery/hyde-hyde.git
