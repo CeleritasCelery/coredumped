@@ -120,7 +120,7 @@ This macro releases the _mutable_ borrow and reborrows the object with an _immut
 This approach works fine for rooting a single object, but what if we have a whole collection of objects? You might be tempted to think that would be an non-issue, but consider the problem below:
 
 ```rust
-let rooted: Vec<Object<'root>> = ...; // we have a vec of root objects
+let rooted: &mut Vec<Object<'root>> = ...; // we have a vec of root objects
 let object: Object<'arena> = arena.add("new"); // object is bound to arena
 rooted.push(object); // object is now bound to rooted
 arena.garbage_collect(); // Object is marked as live and not freed
@@ -216,7 +216,7 @@ my_struct.borrow_mut(&mut root_owner, &arena).push(object);
 
 So there you have it! A safe, precise, garbage collector in stable Rust! Now, this comes with a few caveats. It is often said that solving a general problem is three times harder then solving a specific problem. I am solving the specific problem here; creating a GC for my VM. This not ready to ship as a general purpose library without more work. But I am confident it could be made into a library if needed. Right now the garbage collector is about as naive as possible. But future changes will be under-the-hood improvements that don't change the API.
 
-What I think is really cool is that the API is **safe**! You can't create this in `C`  or `C++`; The type system is not powerful enough. Rust enables us to have "fearless garbage collection", and no longer be scared of the "nasty bugs" that we might create. As an anecdote, I was pleasantly surprised to find that when I turned on reclaiming memory in my gc, everything just worked first time; No memory leaks, no use-after-free. The API just took care of it at compile time. Miri was satisfied as well.
+What I think is really cool is that the API is **safe**! You can't create this in C or C++; The type system is not powerful enough. Rust enables us to have "fearless garbage collection", and no longer be scared of the "nasty bugs" that we might create. As an anecdote, I was pleasantly surprised to find that when I turned on reclaiming memory in my gc, everything just worked first time; No memory leaks, no use-after-free. The API just took care of it at compile time. Miri was satisfied as well.
 
 Overall, I am pretty happy with how it turned out. That being said, there is **a lot** of unsafe code behind the scenes. I am the only person that has reviewed it, and I am not smart enough to get everything right. I created a [unsound?](https://github.com/CeleritasCelery/rune/labels/unsound%3F) Label on Github that tracks some of the code I have the least confidence in. If you are initiated in the dark arts of the [nomicon](https://doc.rust-lang.org/nomicon/), I would love for you to [prove me wrong](https://github.com/CeleritasCelery/rune/issues?q=is%3Aissue+label%3Aunsound%3F+).
 
@@ -225,7 +225,7 @@ I am going to continue work on bootstrapping more elisp files to eventually boot
 
 ### Have a comment? {#have-a-comment}
 
-View the discussion on [reddit](https://www.reddit.com/r/rust/comments/u21w97/implementing_a_safe_garbage_collector_in_rust/), send me an [email](mailto:troy.hinckley@dabrev.com), or open an [issue](https://github.com/CeleritasCelery/rune/issues/new).
+View the discussion on [Reddit](https://www.reddit.com/r/rust/comments/u21w97/implementing_a_safe_garbage_collector_in_rust/) or [Hacker News](https://news.ycombinator.com/item?id=31166368), send me an [email](mailto:troy.hinckley@dabrev.com), or open an [issue](https://github.com/CeleritasCelery/rune/issues/new).
 
 [^fn:1]: Why is reference counting slower then garbage collection? There is a lot that goes into it, but it boils down to two main issues:
 
