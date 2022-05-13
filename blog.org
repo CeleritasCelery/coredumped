@@ -750,7 +750,7 @@ What could we do with a generational garbage collector?
 Be cool to create some graphs
 ** DONE Taking org-roam everywhere with logseq
 :PROPERTIES:
-:EXPORT_DATE: 2022-05-13
+:EXPORT_DATE: 2021-05-26
 :EXPORT_FILE_NAME: taking-org-roam-everywhere-with-logseq
 :END:
 I love [[https://www.orgroam.com/][org-roam]]. It lets me take notes in a way that matches how I think. It makes it easy to recall what I have learned and find connections between ideas. But there has always been one big problem with org-roam: it ties me to the desktop. When I am on the go and all I have is my phone, I don't have access to my notes.
