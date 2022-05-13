@@ -1,7 +1,7 @@
 +++
 title = "Taking org-roam everywhere with logseq"
 author = ["Troy Hinckley"]
-date = 2021-05-26
+date = 2022-05-13
 draft = false
 +++
 
