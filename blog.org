@@ -753,6 +753,8 @@ Be cool to create some graphs
 :EXPORT_DATE: 2021-05-26
 :EXPORT_FILE_NAME: taking-org-roam-everywhere-with-logseq
 :END:
+Update: 2022-05-13
+
 I love [[https://www.orgroam.com/][org-roam]]. It lets me take notes in a way that matches how I think. It makes it easy to recall what I have learned and find connections between ideas. But there has always been one big problem with org-roam: it ties me to the desktop. When I am on the go and all I have is my phone, I don't have access to my notes.
 
 There are some stop gap solutions to try and fix this. [[https://beorgapp.com/][Beorg]] is iOS app that supports editing org files on mobile. However, it is more focused on task management than note taking. It does not offer text search, has no way to insert "org-roam-links", and does not supported nested directories of org files. [[https://organice.200ok.ch/][Organice]] is another org mobile solution that can be used as PWA. However, it suffers from the same limitations as beorg, and has a poor editing experience (when you switch away from the app it will close your text box, making it hard to take notes on something you are reading). In the end, I was not satisfied with anything that I found: nothing allowed the same workflow I had on desktop.
