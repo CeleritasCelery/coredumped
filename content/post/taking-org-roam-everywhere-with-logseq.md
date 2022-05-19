@@ -46,7 +46,8 @@ For the emacs-side config we need to make sure that org-roam follows the same di
   (org-roam-capture-templates
    '(("d" "default" plain
       "%?" :target
-      (file+head "pages/${slug}.org" "#+title: ${title}\n")))))
+      (file+head "pages/${slug}.org" "#+title: ${title}\n")
+      :unnarrowed t))))
 ```
 
 One other issue is that when logseq creates a link, it will do so using a file link. But when org-roam creates a link it will do using a id link. Org-roam doesn't see file links as backlinks and logseq [doesn't see id links as backlinks](https://github.com/logseq/logseq/issues/3281#issuecomment-1059862531). It's kind of a [moose juice](https://seuss.fandom.com/wiki/Sleeping_Moose) and goose juice situation. To fix this I regularly run `org-roam-migrate-wizard`, which will convert file links to id links (among other things).
