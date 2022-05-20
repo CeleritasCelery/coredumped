@@ -1127,7 +1127,7 @@ As with everything in engineering, concurrency comes with trade-offs. Implementi
 
 Anyways, I would love to get some feedback on the ideas presented. Are there obvious holes that I missed? Would this scheme be useful? Do you know way that these could be implemented (or would not be possible to implement)? How does this compare to other dynamic languages? Do you prefer the more "thread-like" or "green-thread-like" approach? Is there a way to address some of the problems presented above?
 **** have a comment?
-send me an [[mailto:troy.hinckley@dabrev.com][email]]
+Leave a comment on [[https://www.reddit.com/r/emacs/comments/utzxir/a_vision_of_a_multithreaded_emacs/][reddit]] or send me an [[mailto:troy.hinckley@dabrev.com][email]]
 
 [fn:1] Similar to what is being attempted for python [[https://github.com/colesbury/nogil][here]] and [[https://github.com/larryhastings/gilectoy][here]].
 

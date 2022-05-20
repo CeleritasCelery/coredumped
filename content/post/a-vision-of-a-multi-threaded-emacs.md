@@ -174,7 +174,7 @@ Anyways, I would love to get some feedback on the ideas presented. Are there obv
 
 ### have a comment? {#have-a-comment}
 
-send me an [email](mailto:troy.hinckley@dabrev.com)
+Leave a comment on [reddit](https://www.reddit.com/r/emacs/comments/utzxir/a_vision_of_a_multithreaded_emacs/) or send me an [email](mailto:troy.hinckley@dabrev.com)
 
 [^fn:1]: And you can't share anything that doesn't have a clear [readable](https://www.gnu.org/software/emacs/manual/html_node/elisp/Streams-Intro.html) representation such as windows, frames, or makers.
 [^fn:2]: Similar to what is being attempted for python [here](https://github.com/colesbury/nogil) and [here](https://github.com/larryhastings/gilectoy).
