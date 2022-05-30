@@ -61,7 +61,7 @@ So what are the standards we want for a multi-threaded Emacs implementation? Her
 
 ## A jumping off point {#a-jumping-off-point}
 
-Most people have never heard of TCL (or if they have they've never used it) but I find it has a [very simple approach](https://www.activestate.com/blog/threads-done-right-tcl/) to multi-threading. Essentially the an interpreter can work in it's own thread, and carries with it all of its state. This is the multi-interpreter approach; Every thread starts in a clean environment with it's own interpreter. "Messages" can be passed to any thread and they can return a result. In elisp it could look something like this.
+Most people have never heard of TCL (or if they have they've never used it) but I find it has a [very simple approach](https://www.activestate.com/blog/threads-done-right-tcl/) to multi-threading. Essentially the an interpreter can work in its own thread, and carries with it all of its state. This is the multi-interpreter approach; Every thread starts in a clean environment with its own interpreter. "Messages" can be passed to any thread and they can return a result. In elisp it could look something like this.
 
 ```emacs-lisp
 (let ((thread1 (make-thread))
@@ -88,7 +88,7 @@ This is really simple and really effective, but it has some limitations. First i
 
 What if instead of needing to copy the buffers between threads, they could be shared? I know, I know, shared-memory is a footgun, but we are going to use mutex's! So it more like sharing in pre-school where everyone get's a turn. Each buffer is guarded by a mutex, and only one thread can have access to a buffer at a given time. The way you acquire the mutex is by switching to that buffer (using `set-buffer` , `switch-to-buffer`, or `with-current-buffer`). Just as you can only have a single "current buffer", you can only have the mutex for a single buffer at a time. A thread can switch to a buffer, do some operations, then release it. This is all well and good, but we have a major issue; shared-state.
 
-You see, for a buffer to really be useful you need have the buffer local variables. Without those you can't even know the `major-mode`! But buffer local variable can share data with global variables, and each thread has it's own set of globals. Consider the code below:
+You see, for a buffer to really be useful you need have the buffer local variables. Without those you can't even know the `major-mode`! But buffer local variable can share data with global variables, and each thread has its own set of globals. Consider the code below:
 
 ```emacs-lisp
 (defvar local nil)
