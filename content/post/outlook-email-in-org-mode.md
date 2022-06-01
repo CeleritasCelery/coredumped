@@ -271,4 +271,4 @@ that region."
 
 ### Have a comment? {#have-a-comment}
 
-View the discussion on [Reddit](https://www.reddit.com/r/emacs/comments/gxrg0b/writing_email_for_outlook_inside_emacs/?utm_source=share&utm_medium=web2x&context=3) or send me an email
+View the discussion on [Reddit](https://www.reddit.com/r/emacs/comments/gxrg0b/writing_email_for_outlook_inside_emacs/?utm_source=share&utm_medium=web2x&context=3) or send me an [email](mailto:troy.hinckley@dabrev.com)

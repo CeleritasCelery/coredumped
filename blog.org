@@ -253,7 +253,7 @@ Unless you disable it, outlook will try and "prettify" some characters as you ty
              (cl-sort (list (point) (mark t)) '<))))
 #+END_SRC
 **** Have a comment?
-View the discussion on [[https://www.reddit.com/r/emacs/comments/gxrg0b/writing_email_for_outlook_inside_emacs/?utm_source=share&utm_medium=web2x&context=3][Reddit]] or send me an email
+View the discussion on [[https://www.reddit.com/r/emacs/comments/gxrg0b/writing_email_for_outlook_inside_emacs/?utm_source=share&utm_medium=web2x&context=3][Reddit]] or send me an [[mailto:troy.hinckley@dabrev.com][email]]
 
 ** DONE Native shell completion in Emacs :shell:emacs:
 :PROPERTIES:
@@ -317,7 +317,7 @@ We could stop here and just create a function to send tab to the underlying proc
 I hope this is the shell-mode completion Endgame. I don't think I can take much more.
 
 **** Have a comment?
-View the discussion on [[https://www.reddit.com/r/emacs/comments/ek8v0e/native_shell_completion_in_emacs/?utm_source=share&utm_medium=web2x&context=3][Reddit]] or send me an email
+View the discussion on [[https://www.reddit.com/r/emacs/comments/ek8v0e/native_shell_completion_in_emacs/?utm_source=share&utm_medium=web2x&context=3][Reddit]] or send me an [[mailto:troy.hinckley@dabrev.com][email]]
 ** DONE [#B] When pure function lie :design:emacs:
 :PROPERTIES:
 :EXPORT_DATE: 2021-04-07
@@ -406,7 +406,7 @@ This is another reason that it is hard to make a true multi-threaded elisp. You 
 
 When I first saw this behavior, I thought for sure that I found a bug in the language implementation. This couldn't possibly be intentional. But after investigating more, I found that this was expected... at least if you are lisp programmer.
 ****  Have a comment?
-View the discussion on [[https://www.reddit.com/r/emacs/comments/mm70re/when_pure_functions_lie/?utm_source=share&utm_medium=web2x&context=3][Reddit]] or send me an email
+View the discussion on [[https://www.reddit.com/r/emacs/comments/mm70re/when_pure_functions_lie/?utm_source=share&utm_medium=web2x&context=3][Reddit]] or send me an [[mailto:troy.hinckley@dabrev.com][email]]
 
 [fn:1] As several people [[https://www.reddit.com/r/emacs/comments/mm70re/when_pure_functions_lie/gtq1oir?utm_source=share&utm_medium=web2x&context=3][pointed out]], the reason this works in python is because it is making a copy of the list every time it returns. You could introduce the same issue in python using default arguments, which are not copied. To protect against this in lisp, you can use ~(vector 1 2 3)~ instead of ~'(1 2 3)~ and it will make a copy of the vector.
 
@@ -611,7 +611,7 @@ I really gained an appreciation for the depth of the Emacs internals. That code 
 As for how long I plan to continue this project, I don't really know. At very least I am going to bootstrap the Emacs lisp compiler to test it against my runtime and implement a garbage collector. My expectation is either that I will learn enough about text-editors and interpreters to be able to contribute to Emacs proper, or I will find a problem in the Rust ecosystem that does not have a good solution and focus on that instead. Or I may continue to see how far I can push this project. Either way, contributions and testing are welcome. Please take a look at the [[https://github.com/CeleritasCelery/rune][code]] and give feedback. I am particularly interested in anything that could be unsound or lead to undefined behavior. This has been a great experience and I am learning more than I could have hoped.
 
 **** Have a comment?
-View the discussion on [[https://www.reddit.com/r/emacs/comments/qcus3f/building_an_emacs_lisp_virtual_machine_in_rust/?utm_source=share&utm_medium=web2x&context=3][Reddit]], [[https://news.ycombinator.com/item?id=29038140][Hacker News]], or send me an email
+View the discussion on [[https://www.reddit.com/r/emacs/comments/qcus3f/building_an_emacs_lisp_virtual_machine_in_rust/?utm_source=share&utm_medium=web2x&context=3][Reddit]], [[https://news.ycombinator.com/item?id=29038140][Hacker News]], or send me an [[mailto:troy.hinckley@dabrev.com][email]]
 
 [fn:1] LLVM has support for this, but is has not been moved into Rust yet.
 
@@ -1127,7 +1127,7 @@ As with everything in engineering, concurrency comes with trade-offs. Implementi
 
 Anyways, I would love to get some feedback on the ideas presented. Are there obvious holes that I missed? Would this scheme be useful? Do you know way that these could be implemented (or would not be possible to implement)? How does this compare to other dynamic languages? Do you prefer the more "thread-like" or "green-thread-like" approach? Is there a way to address some of the problems presented above?
 **** have a comment?
-Leave a comment on [[https://www.reddit.com/r/emacs/comments/utzxir/a_vision_of_a_multithreaded_emacs/][reddit]] or send me an [[mailto:troy.hinckley@dabrev.com][email]]
+View the discussion on [[https://www.reddit.com/r/emacs/comments/utzxir/a_vision_of_a_multithreaded_emacs/][Reddit]], [[https://news.ycombinator.com/item?id=31559818][Hacker News]], or send me an [[mailto:troy.hinckley@dabrev.com][email]]
 
 [fn:1] Similar to what is being attempted for python [[https://github.com/colesbury/nogil][here]] and [[https://github.com/larryhastings/gilectoy][here]].
 

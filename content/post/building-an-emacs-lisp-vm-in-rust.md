@@ -233,7 +233,7 @@ As for how long I plan to continue this project, I don't really know. At very le
 
 ### Have a comment? {#have-a-comment}
 
-View the discussion on [Reddit](https://www.reddit.com/r/emacs/comments/qcus3f/building_an_emacs_lisp_virtual_machine_in_rust/?utm_source=share&utm_medium=web2x&context=3), [Hacker News](https://news.ycombinator.com/item?id=29038140), or send me an email
+View the discussion on [Reddit](https://www.reddit.com/r/emacs/comments/qcus3f/building_an_emacs_lisp_virtual_machine_in_rust/?utm_source=share&utm_medium=web2x&context=3), [Hacker News](https://news.ycombinator.com/item?id=29038140), or send me an [email](mailto:troy.hinckley@dabrev.com)
 
 [^fn:1]: As an added bonus converting between objects can be a no-op with the [arbitrary_enum_discriminant](https://github.com/rust-lang/rust/issues/60553) feature that was set to make it into 1.56. Unfortunately this was [recently reverted](https://github.com/rust-lang/rust/pull/89884).
 [^fn:2]: For an example of how subtle UB can happen with enums see [this crossbeam issue](https://github.com/crossbeam-rs/crossbeam/issues/748).

@@ -99,6 +99,6 @@ When I first saw this behavior, I thought for sure that I found a bug in the lan
 
 ### Have a comment? {#have-a-comment}
 
-View the discussion on [Reddit](https://www.reddit.com/r/emacs/comments/mm70re/when_pure_functions_lie/?utm_source=share&utm_medium=web2x&context=3) or send me an email
+View the discussion on [Reddit](https://www.reddit.com/r/emacs/comments/mm70re/when_pure_functions_lie/?utm_source=share&utm_medium=web2x&context=3) or send me an [email](mailto:troy.hinckley@dabrev.com)
 
 [^fn:1]: As several people [pointed out](https://www.reddit.com/r/emacs/comments/mm70re/when_pure_functions_lie/gtq1oir?utm_source=share&utm_medium=web2x&context=3), the reason this works in python is because it is making a copy of the list every time it returns. You could introduce the same issue in python using default arguments, which are not copied. To protect against this in lisp, you can use `(vector 1 2 3)` instead of `'(1 2 3)` and it will make a copy of the vector.
