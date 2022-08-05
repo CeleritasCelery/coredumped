@@ -50,7 +50,7 @@ For the emacs-side config we need to make sure that org-roam follows the same di
       :unnarrowed t))))
 ```
 
-One other issue is that when logseq creates a link, it will do so using a file link. But when org-roam creates a link it will do using a id link. Org-roam doesn't see file links as backlinks and logseq [doesn't see id links as backlinks](https://github.com/logseq/logseq/issues/3281#issuecomment-1059862531). It's kind of a [moose juice](https://seuss.fandom.com/wiki/Sleeping_Moose) and goose juice situation. To fix this I regularly run `org-roam-migrate-wizard`, which will convert file links to id links (among other things). There is also this [awesome bit of elisp](https://gist.github.com/zot/ddf1a89a567fea73bc3c8a209d48f527) from Bill Burdick that will turn notes you created with logseq into org-roam nodes. I recommend using that as well.
+One other issue is that when logseq creates a link, it will do so using a file link. But when org-roam creates a link it will do using a id link. Org-roam doesn't see file links as backlinks and logseq [doesn't see id links as backlinks](https://github.com/logseq/logseq/issues/3281#issuecomment-1059862531). It's kind of a [moose juice](https://seuss.fandom.com/wiki/Sleeping_Moose) and goose juice situation. To fix this, there is this [awesome bit of elisp](https://gist.github.com/zot/ddf1a89a567fea73bc3c8a209d48f527) from Bill Burdick that will turn notes you created with logseq into org-roam nodes. I highly recommend using that.
 
 
 ## Taking org-roam on the go {#taking-org-roam-on-the-go}
