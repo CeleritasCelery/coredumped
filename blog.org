@@ -569,13 +569,13 @@ This macro creates a wrapper around the function that transforms lisp objects in
 Generics are a really powerful feature that let you build reusable data structures and help eliminate some boilerplate. Less code means less bugs. Generics are particular useful in conjunction with traits, letting you implement them for a range of types. However, I found that in practice generics were less useful than they could have been due to the lack of [[https://rust-lang.github.io/rfcs/1210-impl-specialization.html][specialization]]. This absence means that anytime you need to specialize for one type you completely lose the use of generics for that function/trait [fn:7]. Because of this I ended up implementing many of the traits with macros instead of generics. If specialization is ever stabilized, it will remove hundreds of lines of boilerplate from the code base. But it looks like that is still a [[https://aturon.github.io/blog/2017/07/08/lifetime-dispatch/][ways off]].
 
 **** Garbage collection
-I have not currently implemented a garbage collector for my interpreter, though it doesn't leak memory. This works because all objects are “owned” by an arena, and all the lifetimes of objects are tied to the borrow of the that arena. So when the arena goes out of scope, so do all the objects it owns. This works fine for bootstrapping, but there is no freeing of unused memory. I have done a lot of reading on garbage collectors and they are considered very tricky to get right. As Bob Nystrom [[http://craftinginterpreters.com/garbage-collection.html#garbage-collection-bugs][said]], “garbage collector bugs really are some of the grossest invertebrates out there.”
+I have not currently implemented a garbage collector for my interpreter, though it doesn't leak memory. This works because all objects are “owned” by an ~Context~, and all the lifetimes of objects are tied to the borrow of the that context. So when the context goes out of scope, so do all the objects it owns. This works fine for bootstrapping, but there is no freeing of unused memory. I have done a lot of reading on garbage collectors and they are considered very tricky to get right. As Bob Nystrom [[http://craftinginterpreters.com/garbage-collection.html#garbage-collection-bugs][said]], “garbage collector bugs really are some of the grossest invertebrates out there.”
 
 Rust has some unique offerings that promise to not only make garbage collectors easier to implement, but safer to use as well. I am not going to go into detail here because you can find a great overview of different approaches in this [[https://manishearth.github.io/blog/2021/04/05/a-tour-of-safe-tracing-gc-designs-in-rust/][series of blog posts]].
 
 The most interesting crates to me are ones that use Rust's borrow checker to ensure that it is safe to run the collector. All objects have a lifetime tied to a ~Context~ object. Anytime the Garbage collector runs it takes a ~&mut self~, ensuring all objects it created can't be accessed afterwards. In order to keep objects alive you need to root them. This is either done with stack or linked list. Some examples of this approach are [[https://github.com/asajeffrey/josephine][joesphine]] and [[https://github.com/withoutboats/shifgrethor][shifgrethor]].
 
-Another similar approach is the concept of [[https://raw.githubusercontent.com/Gankro/thesis/master/thesis.pdf][generativity]], which is essentially using a unique lifetime to brand objects so they cannot be unified with other arenas. The [[https://crates.io/crates/gc-arena][gc-arena]] and [[https://crates.io/crates/cell-gc][cell-gc ]]are example of this. One thing is for sure, these libraries will become much easier to use if Rust ever gets the ability to track stack roots[fn:1]. Until that time there is still an wide space to be explored.
+Another similar approach is the concept of [[https://raw.githubusercontent.com/Gankro/thesis/master/thesis.pdf][generativity]], which is essentially using a unique lifetime to brand objects so they cannot be unified with other Context's. The [[https://crates.io/crates/gc-arena][gc-arena]] and [[https://crates.io/crates/cell-gc][cell-gc ]]are example of this. One thing is for sure, these libraries will become much easier to use if Rust ever gets the ability to track stack roots[fn:1]. Until that time there is still an wide space to be explored.
 
 The last thing that makes garbage collectors difficult in Rust is the that the [[https://github.com/rust-lang/wg-allocators][allocator API]] is still unstable, and probably won't be stabilized anytime soon. Some gc algorithm's rely on particular layouts of data to work correctly. Currently you need to either use the changing API in nightly or implement things yourself with pointers.
 
@@ -804,6 +804,7 @@ With org-roam and logseq setup, I can now access my notes anywhere. When I am ar
 :EXPORT_FILE_NAME: implementing-a-safe-garbage-collector-in-rust
 :END:
 In my [[https://coredumped.dev/2021/10/21/building-an-emacs-lisp-vm-in-rust/][last post]] I introduced an Emacs Lisp VM I was [[https://github.com/CeleritasCelery/rune][writing in Rust]]. My stated goal at the time was to complete a garbage collector. I think Rust has some really interesting properties that will make building garbage collectors easier and safer. Many of the techniques used in my GC are not original and have been developed by other Rustaceans in previous projects.
+Updated: 2022-09-06
 *** Why use garbage collection?
 virtually all non-trivial programs need some way to reuse memory. Rust does this by tracking every allocation statically to determine when it's no longer in use. However, this system is not flexible enough for some applications. In these cases Rust gives you [[https://doc.rust-lang.org/std/rc/struct.Rc.html][Rc]], the reference counting cell. This cell tracks the number of owners of a piece of memory at runtime. Reference counting has the advantage that is relatively easy to implement and integrates seamlessly with non-rc code. However, it also has two big downsides: It's slower[fn:5] and it can't detect cyclic data (which lisp is full of). For these reasons (and others) dynamic languages often use garbage collection (GC) to manage data.
 
@@ -815,12 +816,12 @@ Emacs (and many C based GC implementations) solves this by recognizing that the 
 When we allocate a new object, we know that it is unaliased (nothing has a pointer to it). But as soon as we give that pointer to user code, it becomes exposed. Problem is, we need to know when it safe to call ~drop~ and release the memory.  In C, it is up to the user to call ~free~ when they are done with it. But Rust tracks the liveness of the data with the type system. The Rust rule is this: There can be many immutable references to an object or one mutable reference (but not both). If you have immutable references, they get invalidated as soon as a mutable reference is used.
 
 **** Affine types
-This key property of Rust (called affine types) is what is used in the gc library [[https://docs.rs/josephine/latest/josephine/][Jospehine]]. They use Rust's borrow checker to ensure no references are live after collection. We do the same. All pointers into the GC heap borrowed from our allocator (called ~Arena~) via a immutable reference. When we call ~garbage_collect~, we take a ~&mut Arena~, ensuring that all heap references are no longer accessible.
+This key property of Rust (called affine types) is what is used in the gc library [[https://docs.rs/josephine/latest/josephine/][Jospehine]]. They use Rust's borrow checker to ensure no references are live after collection. We do the same. All pointers into the GC heap borrowed from our allocator (called ~Context~) via a immutable reference. When we call ~garbage_collect~, we take a ~&mut Context~, ensuring that all heap references are no longer accessible.
 #+begin_src rust
-  let arena: &'ob Arena = ...;
-  let object: Object<'ob> = arena.add("foo");
+  let cx: &'ob Context = ...;
+  let object: Object<'ob> = cx.add("foo");
   use_object(object);
-  arena.garbage_collect(); // Object is no longer accessible
+  cx.garbage_collect(); // Object is no longer accessible
 #+end_src
 
 However, If we  invalidate all references to the GC heap when we call ~garbage_collect~, we can't access our data at all afterwards. We obviously need something more here.
@@ -837,9 +838,9 @@ We have a similar problem with normal data structures. We need to get a referenc
   let value2 = map.get(key).unwrap(); // Use key to get our data back again
 #+end_src
 
-Here we are storing our data inside the map and using some unique token (the key) to keep track of our value inside the data structure when we loose access to our reference. We can do the same thing with our gc ~Arena~. We store the roots inside before we garbage collect.
+Here we are storing our data inside the map and using some unique token (the key) to keep track of our value inside the data structure when we loose access to our reference. We can do the same thing with our gc ~Context~. We store the roots inside before we garbage collect.
 #+begin_src rust
-  struct Arena {
+  struct Context {
       roots: HashMap<Token, Object>,
       ...
   }
@@ -848,56 +849,56 @@ However we have at least two problems with this:
 
 First, what do we use for a token? Everytime we need to root something we need a token that is unique. Even if we generated something random there is still a chance we could have two roots with the same ~Token~, which would lead to memory unsafety.
 
-Which leads to the second problem: once something is no longer rooted, how do we remove it from the ~Arena~? We could require the user to manually call ~remove~ when they no longer need a root, but any failure to do so would result in leaking memory. That is not a good API.
+Which leads to the second problem: once something is no longer rooted, how do we remove it from the ~Context~? We could require the user to manually call ~remove~ when they no longer need a root, but any failure to do so would result in leaking memory. That is not a good API.
 **** Standing on the shoulders of boats
 Thankfully, I am not the first person to think about this problem. Saoirse has a [[https://without.boats/blog/shifgrethor-iii/][blog post]] about some novel observations on rooting in Rust. This was implemented in his gc library [[https://github.com/withoutboats/shifgrethor][shifgrethor]]. I will summarize this approach below.
 
-The first observation is that if you don't drop or move a type on the stack, then its lifetime is perfectly stack-like. Shocking I know, but the really cool part about this is that we can use it to define the way we store the roots in ~Arena~. What if instead of storing them as a map, we store them as a stack instead? When something is rooted, it is pushed on the stack. When it drops, it is popped from the stack. This also solves our problem of creating a unique ~Token~ to find our object, because when we drop we know that our item will always be the top of the root stack. So no ~Token~ needed.
+The first observation is that if you don't drop or move a type on the stack, then its lifetime is perfectly stack-like. Shocking I know, but the really cool part about this is that we can use it to define the way we store the roots in ~Context~. What if instead of storing them as a map, we store them as a stack instead? When something is rooted, it is pushed on the stack. When it drops, it is popped from the stack. This also solves our problem of creating a unique ~Token~ to find our object, because when we drop we know that our item will always be the top of the root stack. So no ~Token~ needed.
 
 In order for this to work we have to make sure the object can't move. This sounds just like the pinning! We define a new macro ~root!~ that works similarly to [[https://docs.rs/pin-utils/0.1.0/pin_utils/macro.pin_mut.html][pin_mut!]]. This ensure our objects behaves in a stack-like manner, greatly simplifying the implementation.
 
-As far as keeping our references around post garbage collection, we know that so long as our object is rooted it will be valid. We can keep a reference into the Gc heap until we unroot (i.e. the root goes out of scope). Our ~root!~ macro will change our reference from borrowing from ~Arena~ to a borrowing from the root. So long as the root is live, our reference is valid; Even if we garbage collect.
+As far as keeping our references around post garbage collection, we know that so long as our object is rooted it will be valid. We can keep a reference into the Gc heap until we unroot (i.e. the root goes out of scope). Our ~root!~ macro will change our reference from borrowing from ~Context~ to a borrowing from the root. So long as the root is live, our reference is valid; Even if we garbage collect.
 #+begin_src rust
-  let object = arena.add("new");
+  let object = cx.add("new");
   // add the object to the root stack, enabling it to live past collection
-  root!(object, arena);
-  arena.garbage_collect(); // gc will mark the object as live
+  root!(object, cx);
+  cx.garbage_collect(); // gc will mark the object as live
   println!("{object}"); // Object is still accessible
 #+end_src
 **** Returning from functions
 There is one more ergonomic problem we want to solve here. Suppose we have the function below:
 #+begin_src rust
-  fn foo<'a>(arena: &'a mut Arena) -> Object<'a> {
+  fn foo<'a>(cx: &'a mut Context) -> Object<'a> {
       ...
-      arena.add(5);
+      cx.add(5);
   }
 #+end_src
-The function takes a ~&mut Arena~, and at the end it returns an ~Object~ with the same lifetime. [[https://github.com/pretzelhammer/rust-blog/blob/master/posts/common-rust-lifetime-misconceptions.md#9-downgrading-mut-refs-to-shared-refs-is-safe][Seems fine]] right? Not so. The Rust lifetime rules [[https://doc.rust-lang.org/nomicon/lifetime-mismatch.html][require]] that the /mutable borrow/ of ~Arena~ now lasts for the lifetime ~'a~! This means we can't reuse ~Arena~ while the ~Object~ is borrowed from it. We could just ~root!~ the object, but that adds overhead to every call. In my interpreter, nearly every method takes ~&mut Arena~, so that would get expensive fast.
+The function takes a ~&mut Context~, and at the end it returns an ~Object~ with the same lifetime. [[https://github.com/pretzelhammer/rust-blog/blob/master/posts/common-rust-lifetime-misconceptions.md#9-downgrading-mut-refs-to-shared-refs-is-safe][Seems fine]] right? Not so. The Rust lifetime rules [[https://doc.rust-lang.org/nomicon/lifetime-mismatch.html][require]] that the /mutable borrow/ of ~Context~ now lasts for the lifetime ~'a~! This means we can't reuse ~Context~ while the ~Object~ is borrowing from it. We could just ~root!~ the object, but that adds overhead to every call. In my interpreter, nearly every method takes ~&mut Context~, so that would get expensive fast.
 
 To work around this we create a new macro ~rebind!~
 #+begin_src rust
-  rebind!(object, arena);
+  rebind!(object, cx);
 #+end_src
-This macro releases the /mutable/ borrow and reborrows the object with an /immutable/ borrow. This frees ~Arena~ to be used by other code while still being [[https://github.com/CeleritasCelery/rune/issues/2][sound]].
+This macro releases the /mutable/ borrow and reborrows the object with an /immutable/ borrow. This frees ~Context~ to be used by other code while still being [[https://github.com/CeleritasCelery/rune/issues/2][sound]].
 **** Preventing escapes
 This approach works fine for rooting a single object, but what if we have a whole collection of objects? You might be tempted to think that would be an non-issue, but consider the problem below:
 #+begin_src rust
   let rooted: &mut Vec<Object<'root>> = ...; // we have a vec of root objects
-  let object: Object<'arena> = arena.add("new"); // object is bound to arena
+  let object: Object<'cx> = cx.add("new"); // object is bound to cx
   rooted.push(object); // object is now bound to rooted
-  arena.garbage_collect(); // Object is marked as live and not freed
+  cx.garbage_collect(); // Object is marked as live and not freed
 
   // Object is no longer rooted, but still bound to the root lifetime
   let escape: Object<'root> = rooted.pop().unwrap();
-  arena.garbage_collect(); // Object is freed
+  cx.garbage_collect(); // Object is freed
   println!("{escape}"); // Oh No! Use after Free!
 #+end_src
 We cannot move references out without some way of making sure they stay rooted. Thankfully shifgrethor comes to the rescue here again with it's ~Gc~ type.
 
 Once again we can model after the ~pin~ API, since we are trying to solve a similar problem. If you have a ~Pin<P>~ you know that the data point to by ~P~ will not move. Similarly, we create a ~Root<T>~ type that guarantees ~T~ will not move *and* it's rooted. We use the ~struct_root!~ macro to take a data structure ~T~ and returns a ~&mut Root<T>~ to it.
 #+begin_src rust
-  let arean: Arena = ...;
-  struct_root!(my_struct, arena);
+  let cx: Context = ...;
+  struct_root!(my_struct, cx);
   let _: &mut Root<Vec<Object>> = my_struct;
   // get a reference to vec from root
   let len = my_struct.len();
@@ -925,39 +926,25 @@ Oh, biscuits. What other options do we have? I am sure Rust has an ~AliasCell~ t
  /* googles frantically */
 
 Nope. Though apparently we not the only ones who need this. The std lib created a [[https://github.com/rust-lang/rust/pull/82834][hack]] to avoid miscompilations with aliasing mutable references that is used in [[https://github.com/tokio-rs/tokio/pull/3654][Tokio]] as well. We could take that route (and I was really tempted to) but let's see if there is another way we could fix this.
-**** Can we approach the problem from the other side?
-Actually there is a way ~UnsafeCell~ can help us here. There is one legal way in which you can have aliasing ~&mut T~. By design, a ~&mut T~ can alias with a ~&UnsafeCell<T>~, (but not the other way around). So long as we don't have any ~&T~ at the same time; this is sound. But this of course means interior mutability. We could try just putting ~RefCell~'s everywhere, but that means we are going have to debug runtime panics instead of compile time errors. We /really/ don't want that.
-**** Qcell to the rescue
-[[https://docs.rs/qcell/latest/qcell/index.html][Qcell]] is a crate trying to design a compile time ~RefCell~. It makes a bunch of different cell types, each with their own set of trade off, that give you exactly that. We are going to use [[https://docs.rs/qcell/latest/qcell/struct.LCell.html][LCell]], which is zero cost and perfect for our use case. With this type, multiple cells have a shared owner that control when a cell can be borrowed mutable or immutable. To make this safe we define the following conditions:
-
-1. We can borrow a ~Root~ as immutable if we have a ~&RootOwner~.
-2. We can borrow a ~Root~ as mutable if we have a ~&mut RootOwner~ *and* we have a ~&Arena~. This ensures that we can never call garbage collect while our mutable reference is live, because garbage collect requires a mutable borrow of ~Arena~!
+**** A level of indirection
+The real problem is that we can't have ~&T~ and ~&mut T~ pointing to the same location in memory. So what if we have them point to different locations? We have the real data in memory, and then the ~Root~ type just has a pointer to it instead of wrapping it.
 #+begin_src rust
-  impl<'id, T> Root<'id, T> {
-      pub(crate) fn borrow<'a>(
-          &'a self,
-          owner: &'a RootOwner<'id>
-      ) -> &'a RootRef<T> {...}
-
-      pub(crate) fn borrow_mut<'a>(
-          &'a self,
-          owner: &'a mut RootOwner<'id>,
-          _: &'a Arena
-      ) -> &'a mut RootRef<T> {...}
+  pub(crate) struct Root<'a, T> {
+      data: *mut T,
+      safety: PhantomData<&'a ()>,
   }
 #+end_src
-Using compile-time interior mutability makes our code more verbose then it needs to be, but that is the price we pay sometimes for correctness. I would love for Rust to get an ~AliasCell~ that solves this problem for everyone. Either way, this is what the final API looks like:
-#+begin_src rust
-  let root_owner: RootOwner<'id> = ...;
-  let arean: Arena = ...;
-  struct_root!(my_struct, arena);
-  let _: &Root<'id, Vec<Object>> = my_struct;
-  // immutable borrow
-  let len = my_struct.borrow(&root_owner).len();
-  // mutable borrow
-  my_struct.borrow_mut(&mut root_owner, &arena).push(object);
-#+end_src
+Holding a ~&mut Root<T>~ does not alias with ~T~, which let's the garbage collector do it works without undefined behavior. How do we actually get at the ~T~ though? We can define a new wrapper type ~Rt~ (similar to ~Rc~) which let's us access ~T~ under the following conditions:
 
+1. We can borrow ~&Rt~ from a ~&Root~  at any time. There is no unsoundness here. In fact we will just implement ~Deref~ to make this easier.
+2. We can borrow ~&mut Rt~ from a ~&mut Root~ if we have a ~&Context~. This ensures that we can never call garbage collect while our mutable reference is live, because garbage collect requires a mutable borrow of ~Context~!
+#+begin_src rust
+  impl<T> Root<'_, T> {
+      fn as_mut<'a>(&'a mut self, _cx: &'a Context) -> &'a mut Rt<T> {
+          unsafe { self.deref_mut_unchecked() }
+      }
+  }
+#+end_src
 *** A Safe GC
 So there you have it! A safe, precise, garbage collector in stable Rust! Now, this comes with a few caveats. It is often said that solving a general problem is three times harder then solving a specific problem. I am solving the specific problem here; creating a GC for my VM. This not ready to ship as a general purpose library without more work. But I am confident it could be made into a library if needed. Right now the garbage collector is about as naive as possible. But future changes will be under-the-hood improvements that don't change the API.
 
