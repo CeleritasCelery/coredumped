@@ -416,6 +416,8 @@ View the discussion on [[https://www.reddit.com/r/emacs/comments/mm70re/when_pur
 :EXPORT_FILE_NAME: building-an-emacs-lisp-vm-in-rust
 :END:
 
+Updated: 2023-01-06
+
 About a year ago I was bitten by the PL bug. It started with reading [[http://craftinginterpreters.com/][Crafting Interpreters]] and discovering the wonders hidden under the hood of a compiler. I am also been a big fan of Emacs, and this started to get me interested in how it's interpreter works. At the same time, I was reading the Rust book and trying to understand the concepts there. This all came to a head, and I decided to write an Emacs Lisp interpreter called [[https://github.com/CeleritasCelery/rune][rune]] in Rust.
 
 My goal for this project is to bootstrap [[https://github.com/emacs-mirror/emacs/blob/master/lisp/emacs-lisp/bytecomp.el][bytecomp.el]] and use the Emacs compiler with my bytecode vm using only stable Rust. I have not reached that goal yet, but I have bootstrapped several core Emacs lisp files. At this point I have a enough of an interpreter that I want to share an update and mention some of the trade-offs and other things I have learned.
@@ -449,98 +451,18 @@ Then in the boxing and unboxing code, I could check the type of the tag field an
       _ => ...
   }
 #+end_src
-
-Given all this, I decided to try and see if I could make an enum that still had the space optimization of a tagged pointer (word width). This is done with a ~Data~ type, which is 56 bits wide.
-
+***** A better solution
+The [[https://crates.io/crates/enum-ptr][enum-ptr]] crate provides a good way to address this. We have a tagged version of our value that will "untag" into a regular Rust enum. The "tagged" value is just a pointer and a marker.
 #+begin_src rust
-#[derive(Copy, Clone)]
-pub struct Data<T> {
-    data: [u8; 7],
-    marker: PhantomData<T>,
-}
-#+end_src
-
-When this is used in an enum the result is a 64 bit object (The same size as a tagged pointer on 64-bit systems). [fn:5]
-
-#+begin_src rust
-pub enum Object<'ob> {
-    Int(Fixnum),
-    Float(Data<&'ob f64>),
-    Symbol(Data<Symbol>),
-    True,
-    Nil,
-    Cons(Data<&'ob Cons<'ob>>),
-    Vec(Data<&'ob Vec<Object<'ob>>>),
-    String(Data<&'ob String>),
-    LispFn(Data<&'ob LispFn<'ob>>),
-    SubrFn(Data<&'ob SubrFn>),
-}
-#+end_src
-
-These ~Data~ structures have a ~inner~ method that transforms the 56 bit payload into a full width pointer. This is done by shifting the pointer so that the bottom byte can be used for the discriminant.
-
-#+begin_src rust
-  impl<T> Data<T> {
-      const fn expand(self) -> i64 {
-          let data = self.data;
-          let whole = [
-              0, data[0], data[1], data[2], data[3], data[4], data[5], data[6],
-          ];
-          i64::from_le_bytes(whole) >> 8
-      }
-  }
-
-  impl<'a, T> Inner<&'a T> for Data<&'a T> {
-      fn inner(self) -> &'a T {
-          let bits = self.expand();
-          let ptr = bits as *const T;
-          unsafe { &*ptr }
-      }
+  struct Gc<T> {
+      ptr: *const u8,
+      _data: PhantomData<T>,
   }
 #+end_src
 
-Rust optimizes this into a simple 8 bit shift for boxing and unboxing. The Data type can also hold additional information like mutability.
+We can encode our tag in the pointer however we wish. For my project I am shifting the value by one byte and storing the tag in the low bits. You can then define a ~tag~ and ~untag~ function to convert between ~Gc<Object>~ and ~Object~[fn:5].
 
-Overall I am very happy with this approach. But is has limitations of it's own.
-
-One thing that would make this approach much simpler is if we could use the ~Deref~ trait to unbox ~Data<T>~. But this only works some of the time. Since deref takes ~&self~, it ties the lifetime of the borrow of ~self~ to the lifetime of the unboxed data.
-
-#+begin_src rust
-  impl<'a, T> Deref for Data<&'a T> {
-      type Target = T;
-      fn deref(&'_ self) -> &'a Self::Target {
-          self.inner()
-      }
-  }
-#+end_src
-
-This makes it much less useful. I wish Rust had a trait like ~DerefCopy~ that transformed ~self~ to ~T~ instead of transforming ~&self~ to ~&T~ and still offered [[https://doc.rust-lang.org/std/ops/trait.Deref.html#more-on-deref-coercion][deref coercion]].
-
-#+begin_src rust
-  impl<'a, T> DerefCopy for Data<&'a T> {
-      type Target = &'a T;
-      fn deref(self) -> &Self::Target {
-          self.inner()
-      }
-  }
-#+end_src
-
-Currently I have repurposed the ~Not~ operator as my own deref function. It doesn’t offer any of the magic of deref coercion, but it is more concise then calling ~inner()~ every time you need to unbox something (which is very frequent). And since it takes ~self~ and not ~&self~, it doesn't run into the lifetime issues deref does. So when I need to unbox something I can use ~!data~ to achieve this.
-
-#+begin_src rust
-impl<T> Not for Data<T> where Data<T>: Inner<T> {
-    type Output = T;
-    fn not(self) -> Self::Output {
-        self.inner()
-    }
-}
-#+end_src
-
-Another problem with enums is that they leave the unused portion of the allocation uninitialized  [fn:6]. This can allow optimizations when the kind is known ahead of time and is smaller than the full enum size. However this also prevents other optimizations from being used.
-
-For example, Emacs provides several different version of the ~equal~ function based on how strict they are. The simplest is ~eq~, which checks if two variables point to the same object. This specializes to a single word size comparison (1 instruction), because two objects that point to the same object will have the same bit representation. Unfortunately this optimization is not possible with Rust enums, because part of the enum can be uninitialized, and it is UB to read uninitialized memory. Therefore implementing ~eq~ is much more expensive with a Rust enum then it is with a union. This one of the disadvantages of not have control over the layout of your type.
-
-To work around this, I have tried implementing the fieldless variants of my enum as having a field of type ~Data<()>~ which is always zero. This is slightly less ergonomic, but give back the power to compare objects directly by their bit representation.
+This makes the type ergonomic to use, because we can use it like a normal Rust enum. But we still get the advantages of the type being more compact. The only real downside here is that we can't implement ~Deref~, because the type signature requires that you return a reference, and we need to return an owned value. If the ~Deref~ trait used GAT's instead of references, we wouldn't have this limitation.
 
 **** Defining functions
 I can’t take credit for this, as the idea came from [[https://github.com/remacs/remacs/tree/master/rust_src/remacs-macros][remacs]] (the original Emacs in Rust project), but it really showcases the power of Rust procedural macros. The ~defun~ macro is applied to any normal Rust function and it then becomes callable from lisp.
@@ -611,7 +533,7 @@ I really gained an appreciation for the depth of the Emacs internals. That code 
 As for how long I plan to continue this project, I don't really know. At very least I am going to bootstrap the Emacs lisp compiler to test it against my runtime and implement a garbage collector. My expectation is either that I will learn enough about text-editors and interpreters to be able to contribute to Emacs proper, or I will find a problem in the Rust ecosystem that does not have a good solution and focus on that instead. Or I may continue to see how far I can push this project. Either way, contributions and testing are welcome. Please take a look at the [[https://github.com/CeleritasCelery/rune][code]] and give feedback. I am particularly interested in anything that could be unsound or lead to undefined behavior. This has been a great experience and I am learning more than I could have hoped.
 
 **** Have a comment?
-View the discussion on [[https://www.reddit.com/r/emacs/comments/qcus3f/building_an_emacs_lisp_virtual_machine_in_rust/?utm_source=share&utm_medium=web2x&context=3][Reddit]], [[https://news.ycombinator.com/item?id=29038140][Hacker News]], or send me an [[mailto:troy.hinckley@dabrev.com][email]]
+Join the [[https://discu.eu/?q=https%3A%2F%2Fcoredumped.dev%2F2021%2F10%2F21%2Fbuilding-an-emacs-lisp-vm-in-rust%2F][discussion]], or send me an [[mailto:troy.hinckley@dabrev.com][email]]
 
 [fn:1] LLVM has support for this, but is has not been moved into Rust yet.
 
@@ -621,9 +543,7 @@ View the discussion on [[https://www.reddit.com/r/emacs/comments/qcus3f/building
 
 [fn:4] I saw some claims that using threaded dispatch in CPython brought a 10-20% improvement, but I didn't see benchmarks.
 
-[fn:5] As an added bonus converting between objects can be a no-op with the [[https://github.com/rust-lang/rust/issues/60553][arbitrary_enum_discriminant]] feature that was set to make it into 1.56. Unfortunately this was [[https://github.com/rust-lang/rust/pull/89884][recently reverted]].
-
-[fn:6] For an example of how subtle UB can happen with enums see [[https://github.com/crossbeam-rs/crossbeam/issues/748][this crossbeam issue]].
+[fn:5] As an added bonus converting between objects can be a no-op with the [[https://github.com/rust-lang/rust/issues/60553][arbitrary_enum_discriminant]] feature that was [[https://blog.rust-lang.org/2022/12/15/Rust-1.66.0.html#explicit-discriminants-on-enums-with-fields][released with Rust 1.66]].
 
 [fn:7] This [[https://github.com/rust-lang/rust/issues/50133][issue]] shows how a seemingly innocent blanket implementation in the core can break a bunch of generics for all users due to no specialization.
 
@@ -745,9 +665,6 @@ no brow
 Make sure that you praise it. Excited.
 
 =C-c C-f=
-** TODO [#B] Thoughts on Garbage collection in Emacs
-What could we do with a generational garbage collector?
-Be cool to create some graphs
 ** DONE Taking org-roam everywhere with logseq
 :PROPERTIES:
 :EXPORT_DATE: 2021-05-26

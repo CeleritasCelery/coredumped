@@ -6,6 +6,8 @@ tags = ["emacs", "rust"]
 draft = false
 +++
 
+Updated: 2023-01-06
+
 About a year ago I was bitten by the PL bug. It started with reading [Crafting Interpreters](http://craftinginterpreters.com/) and discovering the wonders hidden under the hood of a compiler. I am also been a big fan of Emacs, and this started to get me interested in how it's interpreter works. At the same time, I was reading the Rust book and trying to understand the concepts there. This all came to a head, and I decided to write an Emacs Lisp interpreter called [rune](https://github.com/CeleritasCelery/rune) in Rust.
 
 My goal for this project is to bootstrap [bytecomp.el](https://github.com/emacs-mirror/emacs/blob/master/lisp/emacs-lisp/bytecomp.el) and use the Emacs compiler with my bytecode vm using only stable Rust. I have not reached that goal yet, but I have bootstrapped several core Emacs lisp files. At this point I have a enough of an interpreter that I want to share an update and mention some of the trade-offs and other things I have learned.
@@ -52,97 +54,21 @@ match object {
 }
 ```
 
-Given all this, I decided to try and see if I could make an enum that still had the space optimization of a tagged pointer (word width). This is done with a `Data` type, which is 56 bits wide.
+
+#### A better solution {#a-better-solution}
+
+The [enum-ptr](https://crates.io/crates/enum-ptr) crate provides a good way to address this. We have a tagged version of our value that will "untag" into a regular Rust enum. The "tagged" value is just a pointer and a marker.
 
 ```rust
-#[derive(Copy, Clone)]
-pub struct Data<T> {
-    data: [u8; 7],
-    marker: PhantomData<T>,
+struct Gc<T> {
+    ptr: *const u8,
+    _data: PhantomData<T>,
 }
 ```
 
-When this is used in an enum the result is a 64 bit object (The same size as a tagged pointer on 64-bit systems).&nbsp;[^fn:1]
+We can encode our tag in the pointer however we wish. For my project I am shifting the value by one byte and storing the tag in the low bits. You can then define a `tag` and `untag` function to convert between `Gc<Object>` and `Object`[^fn:1].
 
-```rust
-pub enum Object<'ob> {
-    Int(Fixnum),
-    Float(Data<&'ob f64>),
-    Symbol(Data<Symbol>),
-    True,
-    Nil,
-    Cons(Data<&'ob Cons<'ob>>),
-    Vec(Data<&'ob Vec<Object<'ob>>>),
-    String(Data<&'ob String>),
-    LispFn(Data<&'ob LispFn<'ob>>),
-    SubrFn(Data<&'ob SubrFn>),
-}
-```
-
-These `Data` structures have a `inner` method that transforms the 56 bit payload into a full width pointer. This is done by shifting the pointer so that the bottom byte can be used for the discriminant.
-
-```rust
-impl<T> Data<T> {
-    const fn expand(self) -> i64 {
-        let data = self.data;
-        let whole = [
-            0, data[0], data[1], data[2], data[3], data[4], data[5], data[6],
-        ];
-        i64::from_le_bytes(whole) >> 8
-    }
-}
-
-impl<'a, T> Inner<&'a T> for Data<&'a T> {
-    fn inner(self) -> &'a T {
-        let bits = self.expand();
-        let ptr = bits as *const T;
-        unsafe { &*ptr }
-    }
-}
-```
-
-Rust optimizes this into a simple 8 bit shift for boxing and unboxing. The Data type can also hold additional information like mutability.
-
-Overall I am very happy with this approach. But is has limitations of it's own.
-
-One thing that would make this approach much simpler is if we could use the `Deref` trait to unbox `Data<T>`. But this only works some of the time. Since deref takes `&self`, it ties the lifetime of the borrow of `self` to the lifetime of the unboxed data.
-
-```rust
-impl<'a, T> Deref for Data<&'a T> {
-    type Target = T;
-    fn deref(&'_ self) -> &'a Self::Target {
-        self.inner()
-    }
-}
-```
-
-This makes it much less useful. I wish Rust had a trait like `DerefCopy` that transformed `self` to `T` instead of transforming `&self` to `&T` and still offered [deref coercion](https://doc.rust-lang.org/std/ops/trait.Deref.html#more-on-deref-coercion).
-
-```rust
-impl<'a, T> DerefCopy for Data<&'a T> {
-    type Target = &'a T;
-    fn deref(self) -> &Self::Target {
-        self.inner()
-    }
-}
-```
-
-Currently I have repurposed the `Not` operator as my own deref function. It doesn’t offer any of the magic of deref coercion, but it is more concise then calling `inner()` every time you need to unbox something (which is very frequent). And since it takes `self` and not `&self`, it doesn't run into the lifetime issues deref does. So when I need to unbox something I can use `!data` to achieve this.
-
-```rust
-impl<T> Not for Data<T> where Data<T>: Inner<T> {
-    type Output = T;
-    fn not(self) -> Self::Output {
-        self.inner()
-    }
-}
-```
-
-Another problem with enums is that they leave the unused portion of the allocation uninitialized&nbsp;[^fn:2]. This can allow optimizations when the kind is known ahead of time and is smaller than the full enum size. However this also prevents other optimizations from being used.
-
-For example, Emacs provides several different version of the `equal` function based on how strict they are. The simplest is `eq`, which checks if two variables point to the same object. This specializes to a single word size comparison (1 instruction), because two objects that point to the same object will have the same bit representation. Unfortunately this optimization is not possible with Rust enums, because part of the enum can be uninitialized, and it is UB to read uninitialized memory. Therefore implementing `eq` is much more expensive with a Rust enum then it is with a union. This one of the disadvantages of not have control over the layout of your type.
-
-To work around this, I have tried implementing the fieldless variants of my enum as having a field of type `Data<()>` which is always zero. This is slightly less ergonomic, but give back the power to compare objects directly by their bit representation.
+This makes the type ergonomic to use, because we can use it like a normal Rust enum. But we still get the advantages of the type being more compact. The only real downside here is that we can't implement `Deref`, because the type signature requires that you return a reference, and we need to return an owned value. If the `Deref` trait used GAT's instead of references, we wouldn't have this limitation.
 
 
 ### Defining functions {#defining-functions}
@@ -174,7 +100,7 @@ This macro creates a wrapper around the function that transforms lisp objects in
 
 ### Generics in Rust {#generics-in-rust}
 
-Generics are a really powerful feature that let you build reusable data structures and help eliminate some boilerplate. Less code means less bugs. Generics are particular useful in conjunction with traits, letting you implement them for a range of types. However, I found that in practice generics were less useful than they could have been due to the lack of [specialization](https://rust-lang.github.io/rfcs/1210-impl-specialization.html). This absence means that anytime you need to specialize for one type you completely lose the use of generics for that function/trait&nbsp;[^fn:3]. Because of this I ended up implementing many of the traits with macros instead of generics. If specialization is ever stabilized, it will remove hundreds of lines of boilerplate from the code base. But it looks like that is still a [ways off](https://aturon.github.io/blog/2017/07/08/lifetime-dispatch/).
+Generics are a really powerful feature that let you build reusable data structures and help eliminate some boilerplate. Less code means less bugs. Generics are particular useful in conjunction with traits, letting you implement them for a range of types. However, I found that in practice generics were less useful than they could have been due to the lack of [specialization](https://rust-lang.github.io/rfcs/1210-impl-specialization.html). This absence means that anytime you need to specialize for one type you completely lose the use of generics for that function/trait&nbsp;[^fn:2]. Because of this I ended up implementing many of the traits with macros instead of generics. If specialization is ever stabilized, it will remove hundreds of lines of boilerplate from the code base. But it looks like that is still a [ways off](https://aturon.github.io/blog/2017/07/08/lifetime-dispatch/).
 
 
 ### Garbage collection {#garbage-collection}
@@ -185,7 +111,7 @@ Rust has some unique offerings that promise to not only make garbage collectors 
 
 The most interesting crates to me are ones that use Rust's borrow checker to ensure that it is safe to run the collector. All objects have a lifetime tied to a `Context` object. Anytime the Garbage collector runs it takes a `&mut self`, ensuring all objects it created can't be accessed afterwards. In order to keep objects alive you need to root them. This is either done with stack or linked list. Some examples of this approach are [joesphine](https://github.com/asajeffrey/josephine) and [shifgrethor](https://github.com/withoutboats/shifgrethor).
 
-Another similar approach is the concept of [generativity](https://raw.githubusercontent.com/Gankro/thesis/master/thesis.pdf), which is essentially using a unique lifetime to brand objects so they cannot be unified with other Context's. The [gc-arena](https://crates.io/crates/gc-arena) and [cell-gc ](https://crates.io/crates/cell-gc)are example of this. One thing is for sure, these libraries will become much easier to use if Rust ever gets the ability to track stack roots[^fn:4]. Until that time there is still an wide space to be explored.
+Another similar approach is the concept of [generativity](https://raw.githubusercontent.com/Gankro/thesis/master/thesis.pdf), which is essentially using a unique lifetime to brand objects so they cannot be unified with other Context's. The [gc-arena](https://crates.io/crates/gc-arena) and [cell-gc ](https://crates.io/crates/cell-gc)are example of this. One thing is for sure, these libraries will become much easier to use if Rust ever gets the ability to track stack roots[^fn:3]. Until that time there is still an wide space to be explored.
 
 The last thing that makes garbage collectors difficult in Rust is the that the [allocator API](https://github.com/rust-lang/wg-allocators) is still unstable, and probably won't be stabilized anytime soon. Some gc algorithm's rely on particular layouts of data to work correctly. Currently you need to either use the changing API in nightly or implement things yourself with pointers.
 
@@ -215,11 +141,11 @@ For example, concurrency in Emacs would not be very useful without the ability t
 
 ## Rust as a language backend {#rust-as-a-language-backend}
 
-Overall, I have come to love Rust! It makes systems programming feel accessible. And the community is absolutely awesome&nbsp;[^fn:5]. I've never had a question that I was not able to get help with. That being said, implementing an interpreter for a dynamic language in Rust is particularly challenging because the host language does not[^fn:6] follow Rust's rules around mutability and aliasing. To solve this you need to either do runtime accounting using `Rc<RefCell<T>>` (which is expensive and leaks cycles), or deal with upholding all of Rust invariants manually in unsafe code. Neither is a very attractive proposition.
+Overall, I have come to love Rust! It makes systems programming feel accessible. And the community is absolutely awesome&nbsp;[^fn:4]. I've never had a question that I was not able to get help with. That being said, implementing an interpreter for a dynamic language in Rust is particularly challenging because the host language does not[^fn:5] follow Rust's rules around mutability and aliasing. To solve this you need to either do runtime accounting using `Rc<RefCell<T>>` (which is expensive and leaks cycles), or deal with upholding all of Rust invariants manually in unsafe code. Neither is a very attractive proposition.
 
 Speaking of unsafe, you often hear that writing unsafe code is "just like writing C". That is not really true. Rust has more invariants that need to be upheld then does C, especially related to mutability, aliasing, traits, layout, initialization, and dropping. All these invariants need to be considered when writing unsafe code and can lead to [very tricky unsound behavior](https://www.youtube.com/playlist?list=PLqbS7AVVErFj1t4kWrS5vfvmHpJ0bIPio). Many of these are either not a concern, or much less of a concern, in correct C code.
 
-Rust also lacks a feature of C that is used to implement fast interpreter loops; [computed goto](https://eli.thegreenplace.net/2012/07/12/computed-goto-for-efficient-dispatch-tables). This feature can be used to implement [direct threading](https://en.wikipedia.org/wiki/Threaded_code#Direct_threading) without the need for assembly code, giving a sizable [performance](http://www.cs.toronto.edu/~matz/dissertation/matzDissertation-latex2html/node6.html) increase on some processors[^fn:7]. Rust may support this in the future, but given the complex interactions this would have with the borrow checker, I doubt it. I could see future where fast Rust interpreters write their inner dispatch loop in C just to take advantage of this feature.
+Rust also lacks a feature of C that is used to implement fast interpreter loops; [computed goto](https://eli.thegreenplace.net/2012/07/12/computed-goto-for-efficient-dispatch-tables). This feature can be used to implement [direct threading](https://en.wikipedia.org/wiki/Threaded_code#Direct_threading) without the need for assembly code, giving a sizable [performance](http://www.cs.toronto.edu/~matz/dissertation/matzDissertation-latex2html/node6.html) increase on some processors[^fn:6]. Rust may support this in the future, but given the complex interactions this would have with the borrow checker, I doubt it. I could see future where fast Rust interpreters write their inner dispatch loop in C just to take advantage of this feature.
 
 Now, none of this is to say that Rust is poor language for writing a dynamic language backend. On the contrary, it offers some features like sum types, unnullable pointers, and safety from concurrent data races that are really powerful.  However, some of Rust's core strengths in aliasing and mutability apply less well to this domain then they do to others.
 
@@ -233,12 +159,11 @@ As for how long I plan to continue this project, I don't really know. At very le
 
 ### Have a comment? {#have-a-comment}
 
-View the discussion on [Reddit](https://www.reddit.com/r/emacs/comments/qcus3f/building_an_emacs_lisp_virtual_machine_in_rust/?utm_source=share&utm_medium=web2x&context=3), [Hacker News](https://news.ycombinator.com/item?id=29038140), or send me an [email](mailto:troy.hinckley@dabrev.com)
+Join the [discussion](https://discu.eu/?q=https%3A%2F%2Fcoredumped.dev%2F2021%2F10%2F21%2Fbuilding-an-emacs-lisp-vm-in-rust%2F), or send me an [email](mailto:troy.hinckley@dabrev.com)
 
-[^fn:1]: As an added bonus converting between objects can be a no-op with the [arbitrary_enum_discriminant](https://github.com/rust-lang/rust/issues/60553) feature that was set to make it into 1.56. Unfortunately this was [recently reverted](https://github.com/rust-lang/rust/pull/89884).
-[^fn:2]: For an example of how subtle UB can happen with enums see [this crossbeam issue](https://github.com/crossbeam-rs/crossbeam/issues/748).
-[^fn:3]: This [issue](https://github.com/rust-lang/rust/issues/50133) shows how a seemingly innocent blanket implementation in the core can break a bunch of generics for all users due to no specialization.
-[^fn:4]: LLVM has support for this, but is has not been moved into Rust yet.
-[^fn:5]: That is, so long as you don't use a trigger phrase like "unsafe code" or "this works fine in C".
-[^fn:6]: Some functional languages do have invariants around immutability, but they often use mutability under the hood.
-[^fn:7]: I saw some claims that using threaded dispatch in CPython brought a 10-20% improvement, but I didn't see benchmarks.
+[^fn:1]: As an added bonus converting between objects can be a no-op with the [arbitrary_enum_discriminant](https://github.com/rust-lang/rust/issues/60553) feature that was [released with Rust 1.66](https://blog.rust-lang.org/2022/12/15/Rust-1.66.0.html#explicit-discriminants-on-enums-with-fields).
+[^fn:2]: This [issue](https://github.com/rust-lang/rust/issues/50133) shows how a seemingly innocent blanket implementation in the core can break a bunch of generics for all users due to no specialization.
+[^fn:3]: LLVM has support for this, but is has not been moved into Rust yet.
+[^fn:4]: That is, so long as you don't use a trigger phrase like "unsafe code" or "this works fine in C".
+[^fn:5]: Some functional languages do have invariants around immutability, but they often use mutability under the hood.
+[^fn:6]: I saw some claims that using threaded dispatch in CPython brought a 10-20% improvement, but I didn't see benchmarks.
