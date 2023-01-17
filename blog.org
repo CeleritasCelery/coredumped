@@ -1135,7 +1135,7 @@ There is also a big need for testing. My code has unit tests, but the true spec 
 This project is still far from complete or useful. It's truly a love letter to Emacs and has been an amazing learning experience. There have been a lot of design challenges trying to do things in a memory-safe and multi-threaded way. I created a [[https://github.com/CeleritasCelery/rune/blob/master/details.org][design doc]] that contains a bunch of loosely structured thoughts on ways different things could be implemented. I also created a bunch of [[https://github.com/CeleritasCelery/rune/issues?q=is%3Aopen+is%3Aissue+label%3A%22design+needed%22][issues]] in the issue tracker with the label: *Design Needed*. This is where I have put some ideas about how to handle things from [[https://github.com/CeleritasCelery/rune/issues/21][multi-threading]] and [[https://github.com/CeleritasCelery/rune/issues/14][string representation]] to [[https://github.com/CeleritasCelery/rune/issues/19][regex]] and [[https://github.com/CeleritasCelery/rune/issues/17][buffer data structures]]. If you have an eye for design or just want to add your thoughts, go ahead and submit a comment or new issue.
 
 **** Have a comment?
-Join the discussion or send me an [[mailto:troy.hinckley@dabrev.com][email]]
+Join the [[https://discu.eu/?q=https%3A%2F%2Fcoredumped.dev%2F2023%2F01%2F17%2Fdesign-of-emacs-in-rust%2F%23fnref%3A3&submit_title=Design%20of%20Emacs%20in%20Rust%20%E2%80%A2%20Core%20Dumped][discussion]] or send me an [[mailto:troy.hinckley@dabrev.com][email]]
 
 [fn:1] This would not have been possible without Rocky Bernstein's amazing resource; [[http://rocky.github.io/elisp-bytecode.pdf][Bytecode Reference Manual]].
 
