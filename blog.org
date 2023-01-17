@@ -423,7 +423,7 @@ About a year ago I was bitten by the PL bug. It started with reading [[http://cr
 My goal for this project is to bootstrap [[https://github.com/emacs-mirror/emacs/blob/master/lisp/emacs-lisp/bytecomp.el][bytecomp.el]] and use the Emacs compiler with my bytecode vm using only stable Rust. I have not reached that goal yet, but I have bootstrapped several core Emacs lisp files. At this point I have a enough of an interpreter that I want to share an update and mention some of the trade-offs and other things I have learned.
 *** Overview
 **** Tree walk or bytecode?
-Emacs has 3 seperate execution engines: a tree walk interpreter, a Bytecode VM, and ([[https://git.savannah.gnu.org/gitweb/?p=emacs.git;a=commit;h=289000eee729689b0cf362a21baa40ac7f9506f6][recently!]]) native compile. They all provide their own sets of trade-offs, but that also mean that any new feature needs to be implemented up to 3 times. I didn't want the duplicate work, so I opted to only have a byte code VM and no interpreter. This turned out to be harder than I initially thought. All the early elisp files assume that you are using an interpreter. Macros are often used before they are defined because the interpreter has lazy-macro expansion. This is harder for a byte-compiler because you want to expand the macro's at compile time instead of run time. I ended up needing to make some tweaks to the ordering and structure of the [[https://github.com/CeleritasCelery/rune/tree/master/lisp][lisp files]] to support a bytecode-only bootstrap.
+Emacs has 3 separate execution engines: a tree walk interpreter, a Bytecode VM, and ([[https://git.savannah.gnu.org/gitweb/?p=emacs.git;a=commit;h=289000eee729689b0cf362a21baa40ac7f9506f6][recently!]]) native compile. They all provide their own sets of trade-offs, but that also mean that any new feature needs to be implemented up to 3 times. I didn't want the duplicate work, so I opted to only have a byte code VM and no interpreter. This turned out to be harder than I initially thought. All the early elisp files assume that you are using an interpreter. Macros are often used before they are defined because the interpreter has lazy-macro expansion. This is harder for a byte-compiler because you want to expand the macro's at compile time instead of run time. I ended up needing to make some tweaks to the ordering and structure of the [[https://github.com/CeleritasCelery/rune/tree/master/lisp][lisp files]] to support a bytecode-only bootstrap.
 **** Object representation
 A critical part of any dynamic language is how to represent types at runtime. Since you will frequently be boxing and unboxing values, you want these to be both time and space efficient.
 
@@ -1038,92 +1038,109 @@ View the discussion on [[https://www.reddit.com/r/emacs/comments/utzxir/a_vision
 [fn:2] Why does adding multi-threading make single-threaded code slower? It essentially comes down the fact that synchronizing memory between cores is [[https://spcl.inf.ethz.ch/Publications/.pdf/atomic-bench.pdf][slow]]. So unless your interpreters are completely independent (which would not be very useful), you are going to add some overhead. Now this doesn't have to be a lot, it can be just a couple percentage points. But it will always be something. The [[https://docs.google.com/document/d/18CXhDb1ygxg-YXNBJNzfzZsDFosB5e6BfnXLlejd9l0/edit][nogil design doc]] goes into great detail about some of performance implications (for python) and how to mitigate them. See also this [[https://github.com/ocamllabs/compiler-hacking/wiki/OCaml-Multicore-Runtime][design doc]] for multi-core OCaml or [[https://www.atdot.net/~ko1/activities/2016_rubykaigi.pdf][this presentation]] on the Actor model in Ruby.
 
 [fn:3] And you can't share anything that doesn't have a clear [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Streams-Intro.html][readable]] representation such as windows, frames, or makers.
-** TODO [#B] Emacs lisp bytecode VM in rust
-This is the third post in my series about writing an Emacs core in Rust. The [[https://coredumped.dev/2021/10/21/building-an-emacs-lisp-vm-in-rust/][first post]] laid out my initial observations and ideas about the language runtime. The [[https://coredumped.dev/2022/04/11/implementing-a-safe-garbage-collector-in-rust/][second post]] focused on building a safe garbage collector in rust using the type system. I initially stated that I wanted to reach the point where I could bootstrap bytecomp.el (the elisp byte compiler). That goal is reached, so I am providing an update on my latest learnings.
-*** interpreter
-At the start, I didn't want to have to implement everything twice, once with an interpreter, then once with the bytecode VM. So I created a bootstrap compiler to let me get [[https://github.com/emacs-mirror/emacs/blob/master/lisp/emacs-lisp/bytecomp.el][bytecomp.el]] enabled, and then I planned to use that elisp compiler for everything else. That way I would only have to maintain one runtime instead of two. However, I continually ran into problems with the bootstrap process. Usually these issues were functions being called before their macros were defined. Every time I encountered one of these I would hack the elisp or the load order to try and work around the problem. But it eventually became a game of wack a mole, and I spent most of time trying to workaround issues instead of actually writing code.
+** DONE [#B] Design of Emacs in Rust
+:PROPERTIES:
+:EXPORT_DATE: 2023-01-17
+:EXPORT_FILE_NAME: design-of-emacs-in-rust
+:END:
+This is the third post in my series about writing an Emacs core in Rust. The [[https://coredumped.dev/2021/10/21/building-an-emacs-lisp-vm-in-rust/][first post]] laid out my initial observations and ideas about the language runtime. The [[https://coredumped.dev/2022/04/11/implementing-a-safe-garbage-collector-in-rust/][second post]] focused on building a safe garbage collector in rust using the type system. I initially stated that I wanted to reach the point where I could bootstrap bytecomp.el (the elisp byte compiler). That goal is reached[fn:1], so I am providing an update on my latest learnings.
+*** Interpreter
+Emacs has multiple runtime environments including the interpreter, bytecompiler, and native code. My initial goal was to not implement more then one runtime, so I determined to only have a bytecode VM. I created a bootstrap compiler to get [[https://github.com/emacs-mirror/emacs/blob/master/lisp/emacs-lisp/bytecomp.el][bytecomp.el]] enabled and then planned to use the elisp compiler for the rest of the code. Despite some good first steps I continually ran into problems with the bootstrap process[fn:4]. I would hack the elisp or the load order to try and work around the problem, but eventually it became a game of whack-a-mole. I spent most of my time trying to workaround issues instead of actually writing code.
 
-I eventually broke down and implemented an elisp interpreter. I agree with Stefan Monnier that the the elisp interpreter [[https://lists.gnu.org/archive/html/emacs-devel/2021-03/msg00068.html][is a crutch to bootstrap the system]], but the startup code is written in a way that you can't bootstrap without the crutch. So I am back to having two runtimes.
-*** symbol layout
-I learned some interesting details about how Emacs represents symbols. A symbol is just a [[https://github.com/emacs-mirror/emacs/blob/master/src/lisp.h#L833-L887][struct]] that hold a bunch of fields like function, value, or properties. You would assume that a ~LispObject~ that contains a symbol would be a pointer to that struct. And indeed it was for a long time.
+I finally broke down and implemented an elisp interpreter. I agree with Stefan Monnier that the the elisp interpreter [[https://lists.gnu.org/archive/html/emacs-devel/2021-03/msg00068.html][is a crutch to bootstrap the system]], but the startup code is written in a way that you can't bootstrap without the crutch[fn:2]. Now I have both an interpreter and bytecode. I learned that I was a little too ambitious in my desire to get rid of the interpreter since it is much easier to debug than bytecode is.
 
-The issue with this is comes from codegen. On most platforms, the assembly can only support immediate values of a certain size (usually less then 16 bits). If a value is bigger then that, it has to be loaded into a register, even if it is known ahead of time. Since pointers are larger then 16 bits, they take more instructions to load and operate on. This also means that the code will be larger, because it needs to keep pointer sized constants all over the code.
+*** Symbol Layout
+I learned some interesting details about how Emacs represents symbols in objects. The symbol itself is a [[https://github.com/emacs-mirror/emacs/blob/master/src/lisp.h#L833-L887][struct]] that hold a bunch of fields like function, value, or properties. You would assume that a ~LispObject~ that contains a symbol would be a pointer to that struct, and indeed it was for a long time.
 
-So the maintainers implemented a clever scheme where symbols are no longer pointers, instead they are offsets from a global symbol array called ~lispsym~. This means that the first object in the array has offset 0 and then the next one has offset ~size_of(LispSymbol)~ and so forth. When you want to get the pointer you just add the [[https://github.com/emacs-mirror/emacs/blob/master/src/lisp.h#L1142-L1144][address of lispsym to the offset]]. As you can imagine, the symbol at index 0 of ~lispsym~ array is the symbol ~nil~, which is used more then any other. As reported in the Emacs [[https://github.com/emacs-mirror/emacs/blob/master/src/ChangeLog.13#L1653-L1662][changelog]], this change reduced the code size by 2.5% and led to a minor speedup up.
-**** implemented in Rust
-One of the really nice things about this scheme is that it maps well to Rust. The language has a limitation that constants cannot refer to statics. The [[https://github.com/rust-lang/const-eval/issues/11][reasons for this]] are complex, and I hope this will be changed someday. You want symbols to be consts because then they can be used in match patterns and const functions. My first attempt working around this was a terrible hack involving self-referential functions and other terrible ideas. Once I learned the Emacs approach, things became super clean and simple:
+The issue with using a pointer comes from codegen. On most architectures immediate values larger than a certain size (usually 16 bits) need to be moved into a register. Pointers are generally larger than that, so they can't be embedded directly in the instruction encoding. Instead they have to be loaded with a separate instruction. Total code size will also be increase because there need to be pointer sized constants all over the code.
+
+To address this, the Emacs maintainers implemented a clever scheme where symbols are not encoded as pointers; they are offsets from a static symbol array called ~lispsym~. This means the first object in the array has offset 0, the next one has offset ~sizeof(LispSymbol)~, and so forth. When you want to get the pointer, you add the [[https://github.com/emacs-mirror/emacs/blob/master/src/lisp.h#L1142-L1144][start address of lispsym to the offset]]. The symbol at index 0 of ~lispsym~ is the symbol ~nil~, which is used more than any other[fn:3]. As reported in the Emacs [[https://github.com/emacs-mirror/emacs/blob/master/src/ChangeLog.13#L1653-L1662][changelog]], this approach reduced the code size by 2.5% and led to a minor speedup.
+**** Implementation in Rust
+One of the really nice things about this scheme is that it maps well to Rust. The language has a limitation that constants cannot refer to statics. The [[https://github.com/rust-lang/const-eval/issues/11][reasons for this]] are complex, and I hope this will be changed someday. It's very useful for symbols to be constants because then they can be used in match patterns and const functions. My first attempt working around this limitation was a terrible hack involving self-referential functions and other terrible ideas. Once I learned the Emacs approach, things became super clean and simple:
 
 #+begin_src rust
+  pub(crate) struct Symbol<'a> {
+      // Offset from the start of the symbol table
+      data: *const SymbolCell,
+      marker: PhantomData<&'a SymbolCell>,
+  }
+
+  // Can be used in match statements ...
   match obj {
       Object::Symbol(NIL) => {...},
       ...
   }
-#+end_src
 
-Or with associated constants:
-
-#+begin_src rust
+  // Or even simpler with associated constants
   match obj {
       Object::NIL => {...},
       ...
   }
 #+end_src
 
-*** Representing strings
-[[https://en.wikipedia.org/wiki/UTF-8#Encoding][UTF-8]] has become the de facto standard for representing text. Emacs closely follows the unicode standard, but uses an extended version of UTF-8. The purpose of this extended range is to support raw bytes.  Let me explain.
+*** Representing Strings
+[[https://en.wikipedia.org/wiki/UTF-8#Encoding][UTF-8]] has become the de facto standard for representing text. Emacs closely follows the unicode standard, but uses an extended version of UTF-8 which enables support for raw bytes.  Let me explain.
 
-One of the reasons that UTF-8 is so useful is because [[https://www.asciitable.com/][ASCII characters]] are automatically valid. These are the values between 0 and 127 and includes the English alphabet. If you assigned a code to every value of the byte, you could only have 256 possible characters. Instead bigger code points are encoded using multiple bytes. The values above 127 are reserved for leading bytes in UTF-8. So a random value above the ASCII range may not be valid. However Emacs [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Text-Representations.html][extends unicode]] to reserves the codepoints [[https://github.com/emacs-mirror/emacs/blob/master/src/character.h#L31-L47][0x3FFF80 to 0x3FFFFF]] as "raw bytes".
+One of the reasons that UTF-8 is so useful is because [[https://www.asciitable.com/][ASCII characters]] are automatically valid. These are the values between 0 and 127 and includes the English alphabet. If you assigned a code point to every value of the byte you could only have 256 possible characters. Instead, bigger code points are encoded using multiple bytes. The values above 127 are reserved for leading bytes in UTF-8. Thus a random value above the ASCII range may not be valid. However Emacs [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Text-Representations.html][extends unicode]] to reserve the code points [[https://github.com/emacs-mirror/emacs/blob/master/src/character.h#L31-L47][0x3FFF80 to 0x3FFFFF]] as "raw bytes between 128 and 255".
 
-The advantage of this is that Emacs can distinguish a "normal" byte that just happens to be valid UTF-8 from a "raw byte" that is not intended to be UTF-8. However the display representation can be a little confusing. For example if you see this printed representation in the buffer:
+The advantage of this is that Emacs can distinguish a "normal" byte that just happens to be valid UTF-8 from a "raw byte" that is not intended to be valid. However the display representation can be a confused with unprintable characters. For example, if you see this printed representation in the buffer:
 
 ~\201~
 
-It can either be the unicode codepoint ~0x81~ (Emacs displays things in octal) or the raw byte ~0x81~, represented by  codepoint ~0x3FFF81~. This can be confusing.
+it can either be the unicode codepoint ~0x81~ (Emacs displays things in octal) or the raw byte ~0x81~ represented by codepoint ~0x3FFF81~. The only way to tell the difference is to inspect the character.
 
-The real downside of this approach is that Emacs strings cannot be assumed to be UTF-8. Which means you can't use third-party string libraries that operate on codepoints. There are other use-case for a "mostly UTF-8 but not quite" type of formats. For example, [[https://simonsapin.github.io/wtf-8/#generalized-utf-8][WFT-8]] is used to handle invalid UTF-16 when converting to UTF-8. The Remacs team [[https://github.com/remacs/remacs/blob/master/rust_src/src/multibyte.rs#L13-L33][had to rewrite the primitive string type]] in their project to support raw bytes.
+There are other use-cases for a "mostly UTF-8 but not quite" type of formats. For example, [[https://simonsapin.github.io/wtf-8/#generalized-utf-8][WTF-8]] is used to handle invalid UTF-16 conversions to UTF-8. The downside of these formats is that you loose compliance with the spec, which means you can't use third-party string libraries that operate on code points. The Remacs team [[https://github.com/remacs/remacs/blob/master/rust_src/src/multibyte.rs#L13-L33][had to rewrite the primitive string type]] in their project to support raw bytes.
 
-As with everything, it is a trade-off. For my project I am taking the [[https://docs.rs/bstr/latest/bstr/][bstr]] approach. That assumes that string are conventionally UTF-8, but will handle invalid bytes gracefully. Raw bytes are no longer distinguishable from other bytes in the buffer, but I see that as acceptable to be able to use existing libraries.
+I am taking the [[https://docs.rs/bstr/latest/bstr/][bstr]] approach for my project. That assumes that strings are conventionally UTF-8, but will handle invalid bytes gracefully. Raw bytes are no longer distinguishable from other bytes, but I see that as an acceptable trade-off to use existing libraries.
 
-*** managing stack references
-One of the trickiest part of implementing a garbage collector is handling roots. You need to ensure that any value that is reachable from the C stack or machine register is not garbage collected. In the days of yore, Emacs had a method called [[http://www.sxemacs.org/docs/internals/GCPROing.html#GCPROing][GCPRO]] to handle this. As the SXEmacs docs say, "GCPROing is one of the ugliest and trickiest parts of Emacs internals".
+*** Finding GC Roots
+One of the trickiest parts of implementing a garbage collector is handling roots. You need to ensure that any value that is reachable from the program stack or machine register is not garbage collected. In the days of yore, Emacs had a method called GCPRO to handle this. As the [[http://www.sxemacs.org/docs/internals/GCPROing.html#GCPROing][SXEmacs docs say]], "GCPROing is one of the ugliest and trickiest parts of Emacs internals".
 
-In order to use GCPRO,  the old documentation provided bunch of rules to avoid memory issues including:
+In order to use GCPRO,  there were a bunch of rules provided to avoid memory issues including:
 
 1. For every GCPROn, there have to be declarations of struct gcpro gcpro1, gcpro2, etc.
 2. You must UNGCPRO anything that’s GCPROed
-3. you must not UNGCPRO if you haven’t GCPROed
+3. You must not UNGCPRO if you haven’t GCPROed
 4. Make sure not to use a relocated string. They are not GCPROed
-5. if you have to nest GCPRO’s, use NGCPROn
+5. If you have to nest GCPRO’s, use NGCPROn
 6. Don't GCPRO uninitialized memory
-7. if you create any Lisp objects, you are responsible for GCPROing them
+7. If you create any Lisp objects, you are responsible for GCPROing them
 8. Make sure that traps can't occur between allocating memory and GCPRO
 
-The docs state that bugs resulting from not following these rules are "intermittent and extremely difficult to track down, often showing up in crashes inside of garbage-collect or in weirdly corrupted objects or even in incorrect values in a totally different section of code". Sounds like a maintenance nightmare.
+The docs state that bugs resulting from not following these rules are "intermittent and extremely difficult to track down, often showing up in crashes inside of garbage-collect or in weirdly corrupted objects or even in incorrect values in a totally different section of code".
 
-It's no wonder that the maintainers decided to abandon this approach and instead use conservative stack scanning, (where you treat everything that looks like a pointer on the stack as pointer). This is what the Spidermonkey team [[https://blog.mozilla.org/javascript/2013/07/18/clawing-our-way-back-to-precision/][had to say]] about switching to conservative scanning:
+It's no wonder that the maintainers decided to abandon this approach and instead use conservative stack scanning, (where you treat everything that looks like a pointer on the stack as pointer). This is what the Spidermonkey team [[https://blog.mozilla.org/javascript/2013/07/18/clawing-our-way-back-to-precision/][had to say]] about switching in Firefox:
 
 #+begin_quote
 Language implementations with automatic memory management often start out using exact rooting. At some point, all the careful rooting code gets to be so painful to maintain that a conservative scanner is introduced. The embedding API gets dramatically simpler, everyone cheers and breathes a sigh of relief, and work moves on (at a quicker pace!)
 #+end_quote
 
-However this comes with a tradeoff, you also loose the ability to precisely know what really is a pointer. This may not seem like a big deal, but it limits the kind of collectors [[https://lists.gnu.org/archive/html/emacs-devel/2015-09/msg00695.html][you can implement]], such as a copying GC. The same post by the Spidermonkey team mentions their effort to "claw their way back to precision".  However given the complexity GCPRO added to Emacs, I still think removing GCPRO was the right call.
+However this comes with a tradeoff, you also loose the ability to precisely know what is really a pointer. This may not seem like a big deal, but it limits the kind of collectors [[https://lists.gnu.org/archive/html/emacs-devel/2015-09/msg00695.html][you can implement]] (such as a copying GC). The same post by the Spidermonkey team mentions their effort to "claw their way back to precision". They needed the performance improvements that can come with precise memory management techniques. Despite that, given all the complexity added to Emacs by GCPRO I think removing it was the right call.
 
 Rust gives us a different option. It's powerful type system and affine types let us have both precision and a bug-free implementation. I wrote a whole post describing how you to [[https://coredumped.dev/2022/04/11/implementing-a-safe-garbage-collector-in-rust/][implement a safe GC in rust]],  so I won't expand on that here. Suffice it to say that the borrow checker can ensure that all stack roots are accounted for.
 
-*** making emacs multi threaded
-I mentioned in my first post in this series about how Rust does not have a concept of single threaded applications. Every program is considered multi-threaded, even if it only every uses a single thread. This changes how you design programs and data structures, with the biggest difference being no global raw mutable state. I implemented by VM in such a way that it supports multi-threading, meaning I was interested in trying to apply that to the elisp code itself. I [[https://coredumped.dev/2022/05/19/a-vision-of-a-multi-threaded-emacs/][wrote a post]] about my ideas for implementing a multi-core Emacs. That approach is what I am using in this Rust runtime. In fact, the basic supported is already there! Right now you can write code like this:
+*** Making Emacs Multi-Threaded
+I mentioned in my first post in this series how Rust does not have a concept of single threaded applications. Every program is considered multi-threaded, even if only used with a single thread. This changes how you design programs and data structures, with the biggest difference being no unguarded global mutable state. I implemented my VM to support multi-threading, opening the possibility for the elisp itself to take advantage of that. I [[https://coredumped.dev/2022/05/19/a-vision-of-a-multi-threaded-emacs/][wrote a post]] about my ideas for implementing a multi-core Emacs. That approach is what I am using in this Rust runtime. In fact, the basic support is already there! Right now you can write code like this:
 #+begin_src emacs-lisp
 (go (lambda () (do-something-in-thread)))
 #+end_src
 
-And it will execute the code in another thread! This other thread has access to all the functions defined in the main thread. It won't be too much work to add support for channels to send data back and forth. We also need support for copying variable values.
+And it will execute the code in another thread! The other thread has access to all the functions defined in the runtime. It won't be too much work to add support for channels and variables to send data back and forth.
 
-*** Future design work
-As far as next steps go, I hit my initial goal of bootstrapping the elisp bytecompiler. My new overarching goal is to finish bootstrapping all the elisp included with GNU Emacs. While working on my bytecompiler objective,  I tried very hard to only focus on that goal and not get sucked into tangents. However there are several things that are in desperate need of attention. For one, the [[https://github.com/CeleritasCelery/rune/blob/master/src/core/gc/context.rs][garbage collector]] is about the most basic mark-and-sweep imaginable. I am going to bring it up to snuff, and implement a [[https://github.com/CeleritasCelery/rune/issues/20][generational copying collector]].
+*** Future Design Work
+I hit my initial goal of bootstrapping the elisp bytecompiler. My new goal is to finish bootstrapping all elisp included with GNU Emacs and bytecompile it. While working on my bytecompiler objective I tried very hard to not get sucked into tangents. However, there are several things that are in desperate need of attention. For one, the [[https://github.com/CeleritasCelery/rune/blob/master/src/core/gc/context.rs][garbage collector]] is the most basic mark-and-sweep imaginable. I am going to bring it up to snuff and implement a [[https://github.com/CeleritasCelery/rune/issues/20][generational copying collector]].
 
-There is also a big need for testing. My code has unit tests, but the true spec is not my tests, it is Emacs itself. I plan to write a test harness that will let me fuzz my implementation against GNU Emacs. This will hopefully help me flush out a bunch of issues instead of hitting them deep in the code. The bigger the core gets, the more important this will be.
+There is also a big need for testing. My code has unit tests, but the true spec is not my tests - it's Emacs itself. I plan to write a test harness that will let me fuzz my implementation against GNU Emacs. This will hopefully help me flush out a bunch of issues instead of hitting them during development. The bigger the core gets, the more important this will be.
 
-This project is still far from complete or useful. It really is a love letter to Emacs. There have been a lot of design challenges trying to do things in a memory-safe and multi-threaded way. I created a [[https://github.com/CeleritasCelery/rune/blob/master/details.org][design doc]] that contains a bunch of loosely structured thoughts on ways different things could be implemented. I also created a bunch of [[https://github.com/CeleritasCelery/rune/issues?q=is%3Aopen+is%3Aissue+label%3A%22design+needed%22][issues]] in the issue tracker with the label "*Design Needed*". This is where I have put some ideas about how to handle things from [[https://github.com/CeleritasCelery/rune/issues/21][multi-threading]] and [[https://github.com/CeleritasCelery/rune/issues/14][string representation]], to [[https://github.com/CeleritasCelery/rune/issues/19][regex]] and [[https://github.com/CeleritasCelery/rune/issues/17][buffer data structures]]. If you have an eye for design or just want to add your thoughts, go ahead and submit a comment (or a new issue).
+This project is still far from complete or useful. It's truly a love letter to Emacs and has been an amazing learning experience. There have been a lot of design challenges trying to do things in a memory-safe and multi-threaded way. I created a [[https://github.com/CeleritasCelery/rune/blob/master/details.org][design doc]] that contains a bunch of loosely structured thoughts on ways different things could be implemented. I also created a bunch of [[https://github.com/CeleritasCelery/rune/issues?q=is%3Aopen+is%3Aissue+label%3A%22design+needed%22][issues]] in the issue tracker with the label: *Design Needed*. This is where I have put some ideas about how to handle things from [[https://github.com/CeleritasCelery/rune/issues/21][multi-threading]] and [[https://github.com/CeleritasCelery/rune/issues/14][string representation]] to [[https://github.com/CeleritasCelery/rune/issues/19][regex]] and [[https://github.com/CeleritasCelery/rune/issues/17][buffer data structures]]. If you have an eye for design or just want to add your thoughts, go ahead and submit a comment or new issue.
 
-**** have a comment?
-Join the discussion, or send me an [[mailto:troy.hinckley@dabrev.com][email]]
+**** Have a comment?
+Join the discussion or send me an [[mailto:troy.hinckley@dabrev.com][email]]
+
+[fn:1] This would not have been possible without Rocky Bernstein's amazing resource; [[http://rocky.github.io/elisp-bytecode.pdf][Bytecode Reference Manual]].
+
+[fn:4] Most of the boostrap issues were functions being called before their macros were defined. Or it would be variables that were not defined before functions were evaluated. This is fine for an interpreter because the macros and variables would be code paths that were not used, so the macro was never evaluated. But a bytecompiler will expand all macros in a function, so it would generate a function call instead of a macro expansion.
+
+[fn:2] Too be fair, bootstrapping is a really hard problem. You would need something to bootstrap a bytecompiler written in the language you are bytecompiling. My approach was to create a minimal compiler in rust, but you could also take the approach of using bytecode written in a previous build of Emacs. [[https://ziglang.org/news/goodbye-cpp/#the-solution-space][This post by the Zig team]] covers some of the many ways you can bootstrap a language.
+
+[fn:3] Another advantage of ~nil~ being the symbol with offset 0 is that you can now test for nil by comparing with zero, which usually has it's own dedicated instruction.
