@@ -881,7 +881,7 @@ View the discussion on [[https://www.reddit.com/r/rust/comments/u21w97/implement
 With all of these issues, there are techniques to try and mitigate them and get some performance back. But even a naive GC can often beat a well optimized RC implementation. And optimized GC (like JVM or V8) will always outclass reference counting. See [[https://softwareengineering.stackexchange.com/questions/30254/why-garbage-collection-if-smart-pointers-are-there][this SO post]] and [[https://web.archive.org/web/20200325094430/http://flyingfrogblog.blogspot.com/2010/12/why-gc-when-you-have-reference-counted.html][follow up post]] for more.
 [fn:6] I don't think this is true in Rust though. My best guess is that scanning the stack would violate some of rust's aliasing rules and be UB.
 
-** DONE [#B] A vision of a multi-threaded Emacs
+** DONE [#B] A vision of a multi-threaded Emacs :emacs:
 :PROPERTIES:
 :EXPORT_DATE: 2022-05-19
 :EXPORT_FILE_NAME: a-vision-of-a-multi-threaded-emacs
@@ -1038,7 +1038,7 @@ View the discussion on [[https://www.reddit.com/r/emacs/comments/utzxir/a_vision
 [fn:2] Why does adding multi-threading make single-threaded code slower? It essentially comes down the fact that synchronizing memory between cores is [[https://spcl.inf.ethz.ch/Publications/.pdf/atomic-bench.pdf][slow]]. So unless your interpreters are completely independent (which would not be very useful), you are going to add some overhead. Now this doesn't have to be a lot, it can be just a couple percentage points. But it will always be something. The [[https://docs.google.com/document/d/18CXhDb1ygxg-YXNBJNzfzZsDFosB5e6BfnXLlejd9l0/edit][nogil design doc]] goes into great detail about some of performance implications (for python) and how to mitigate them. See also this [[https://github.com/ocamllabs/compiler-hacking/wiki/OCaml-Multicore-Runtime][design doc]] for multi-core OCaml or [[https://www.atdot.net/~ko1/activities/2016_rubykaigi.pdf][this presentation]] on the Actor model in Ruby.
 
 [fn:3] And you can't share anything that doesn't have a clear [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Streams-Intro.html][readable]] representation such as windows, frames, or makers.
-** DONE [#B] Design of Emacs in Rust
+** DONE [#B] Design of Emacs in Rust :rust:emacs:
 :PROPERTIES:
 :EXPORT_DATE: 2023-01-17
 :EXPORT_FILE_NAME: design-of-emacs-in-rust
@@ -1109,13 +1109,13 @@ In order to use GCPRO,  there were a bunch of rules provided to avoid memory iss
 
 The docs state that bugs resulting from not following these rules are "intermittent and extremely difficult to track down, often showing up in crashes inside of garbage-collect or in weirdly corrupted objects or even in incorrect values in a totally different section of code".
 
-It's no wonder that the maintainers decided to abandon this approach and instead use conservative stack scanning, (where you treat everything that looks like a pointer on the stack as pointer). This is what the Spidermonkey team [[https://blog.mozilla.org/javascript/2013/07/18/clawing-our-way-back-to-precision/][had to say]] about switching in Firefox:
+It's no wonder that the maintainers decided to abandon this approach and instead use conservative stack scanning (where you treat everything that looks like a pointer on the stack as pointer). This is what the Spidermonkey team [[https://blog.mozilla.org/javascript/2013/07/18/clawing-our-way-back-to-precision/][had to say]] about switching in Firefox:
 
 #+begin_quote
 Language implementations with automatic memory management often start out using exact rooting. At some point, all the careful rooting code gets to be so painful to maintain that a conservative scanner is introduced. The embedding API gets dramatically simpler, everyone cheers and breathes a sigh of relief, and work moves on (at a quicker pace!)
 #+end_quote
 
-However this comes with a tradeoff, you also lose the ability to precisely know what is really a pointer. This may not seem like a big deal, but it limits the kind of collectors [[https://lists.gnu.org/archive/html/emacs-devel/2015-09/msg00695.html][you can implement]] (such as a copying GC). The same post by the Spidermonkey team mentions their effort to "claw their way back to precision". They needed the performance improvements that can come with precise memory management techniques. Despite that, given all the complexity added to Emacs by GCPRO I think removing it was the right call.
+However this comes with a tradeoff, you also lose the ability to precisely know what really is a pointer. This may not seem like a big deal, but it limits the kind of collectors [[https://lists.gnu.org/archive/html/emacs-devel/2015-09/msg00695.html][you can implement]] (such as a copying GC). The same post by the Spidermonkey team mentions their effort to "claw their way back to precision". They needed the performance improvements that can come with precise memory management techniques. Despite that, given all the complexity added to Emacs by GCPRO I think removing it was the right call.
 
 Rust gives us a different option. It's powerful type system and affine types let us have both precision and a bug-free implementation. I wrote a whole post describing how you to [[https://coredumped.dev/2022/04/11/implementing-a-safe-garbage-collector-in-rust/][implement a safe GC in rust]],  so I won't expand on that here. Suffice it to say that the borrow checker can ensure that all stack roots are accounted for.
 

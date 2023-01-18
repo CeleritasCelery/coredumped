@@ -2,6 +2,7 @@
 title = "A vision of a multi-threaded Emacs"
 author = ["Troy Hinckley"]
 date = 2022-05-19
+tags = ["emacs"]
 draft = false
 +++
 

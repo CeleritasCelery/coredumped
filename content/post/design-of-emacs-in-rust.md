@@ -2,6 +2,7 @@
 title = "Design of Emacs in Rust"
 author = ["Troy Hinckley"]
 date = 2023-01-17
+tags = ["rust", "emacs"]
 draft = false
 +++
 
@@ -83,11 +84,11 @@ In order to use GCPRO,  there were a bunch of rules provided to avoid memory iss
 
 The docs state that bugs resulting from not following these rules are "intermittent and extremely difficult to track down, often showing up in crashes inside of garbage-collect or in weirdly corrupted objects or even in incorrect values in a totally different section of code".
 
-It's no wonder that the maintainers decided to abandon this approach and instead use conservative stack scanning, (where you treat everything that looks like a pointer on the stack as pointer). This is what the Spidermonkey team [had to say](https://blog.mozilla.org/javascript/2013/07/18/clawing-our-way-back-to-precision/) about switching in Firefox:
+It's no wonder that the maintainers decided to abandon this approach and instead use conservative stack scanning (where you treat everything that looks like a pointer on the stack as pointer). This is what the Spidermonkey team [had to say](https://blog.mozilla.org/javascript/2013/07/18/clawing-our-way-back-to-precision/) about switching in Firefox:
 
 > Language implementations with automatic memory management often start out using exact rooting. At some point, all the careful rooting code gets to be so painful to maintain that a conservative scanner is introduced. The embedding API gets dramatically simpler, everyone cheers and breathes a sigh of relief, and work moves on (at a quicker pace!)
 
-However this comes with a tradeoff, you also lose the ability to precisely know what is really a pointer. This may not seem like a big deal, but it limits the kind of collectors [you can implement](https://lists.gnu.org/archive/html/emacs-devel/2015-09/msg00695.html) (such as a copying GC). The same post by the Spidermonkey team mentions their effort to "claw their way back to precision". They needed the performance improvements that can come with precise memory management techniques. Despite that, given all the complexity added to Emacs by GCPRO I think removing it was the right call.
+However this comes with a tradeoff, you also lose the ability to precisely know what really is a pointer. This may not seem like a big deal, but it limits the kind of collectors [you can implement](https://lists.gnu.org/archive/html/emacs-devel/2015-09/msg00695.html) (such as a copying GC). The same post by the Spidermonkey team mentions their effort to "claw their way back to precision". They needed the performance improvements that can come with precise memory management techniques. Despite that, given all the complexity added to Emacs by GCPRO I think removing it was the right call.
 
 Rust gives us a different option. It's powerful type system and affine types let us have both precision and a bug-free implementation. I wrote a whole post describing how you to [implement a safe GC in rust](https://coredumped.dev/2022/04/11/implementing-a-safe-garbage-collector-in-rust/),  so I won't expand on that here. Suffice it to say that the borrow checker can ensure that all stack roots are accounted for.
 
