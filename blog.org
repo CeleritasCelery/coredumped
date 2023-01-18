@@ -262,7 +262,7 @@ View the discussion on [[https://www.reddit.com/r/emacs/comments/gxrg0b/writing_
 :END:
 I am obsessed with autocompletion in shell mode. Running a shell in ~shell-mode~ instead of a terminal emulator has so many advantages. You can treat the whole buffer just like a normal Emacs buffer. You can copy and paste and edit the line normally. You can hook it into native Emacs functionality. You can even [[https://github.com/riscy/shx-for-emacs][display images!]]
 
-However there is one big disadvantage. You loose access to the state the shell. This means that you have to do tricks like ~shell-dirtrack-mode~ just to make sure you are in the right directory. It also means that all the native shell completions are not available. I have tried to approach this problem from multiple angles with packages like [[https://github.com/CeleritasCelery/company-fish][this]], [[https://github.com/CeleritasCelery/company-async-files][this]], and [[https://github.com/CeleritasCelery/company-arguments][this]]. (Yes, I have written a half dozen modes to try solve this.) The most popular package to try and solve this is [[https://github.com/szermatt/emacs-bash-completion][bash-shell-completion]]. However all these solutions have the same problem that they don't actually reflect the internal state of the shell, they are just close approximations.
+However there is one big disadvantage. You lose access to the state the shell. This means that you have to do tricks like ~shell-dirtrack-mode~ just to make sure you are in the right directory. It also means that all the native shell completions are not available. I have tried to approach this problem from multiple angles with packages like [[https://github.com/CeleritasCelery/company-fish][this]], [[https://github.com/CeleritasCelery/company-async-files][this]], and [[https://github.com/CeleritasCelery/company-arguments][this]]. (Yes, I have written a half dozen modes to try solve this.) The most popular package to try and solve this is [[https://github.com/szermatt/emacs-bash-completion][bash-shell-completion]]. However all these solutions have the same problem that they don't actually reflect the internal state of the shell, they are just close approximations.
 
 But the shell knows its own state. In a normal terminal emulator, tab completion will give you access to it. When looking at my shell buffer, it seems that the information I want is just below the surface. If only there was some way to access it. I am not the only one who has had this thought. There is a [[https://stackoverflow.com/questions/163591/bash-autocompletion-in-emacs-shell-mode][stackoverflow]] with over 26,000 views asking this same question. But no one has managed to access the native tab completion before. So I determined to solve this once and for all.
 
@@ -631,7 +631,7 @@ GC is a huge part of the total cost
 53 seconds of GC.
 13261 collections
 40% of it is GC
-**** make sure not to loose introspection
+**** make sure not to lose introspection
 
 **** reader macros
 
@@ -755,7 +755,7 @@ We have a similar problem with normal data structures. We need to get a referenc
   let value2 = map.get(key).unwrap(); // Use key to get our data back again
 #+end_src
 
-Here we are storing our data inside the map and using some unique token (the key) to keep track of our value inside the data structure when we loose access to our reference. We can do the same thing with our gc ~Context~. We store the roots inside before we garbage collect.
+Here we are storing our data inside the map and using some unique token (the key) to keep track of our value inside the data structure when we lose access to our reference. We can do the same thing with our gc ~Context~. We store the roots inside before we garbage collect.
 #+begin_src rust
   struct Context {
       roots: HashMap<Token, Object>,
@@ -1089,7 +1089,7 @@ The advantage of this is that Emacs can distinguish a "normal" byte that just ha
 
 it can either be the unicode codepoint ~0x81~ (Emacs displays things in octal) or the raw byte ~0x81~ represented by codepoint ~0x3FFF81~. The only way to tell the difference is to inspect the character.
 
-There are other use-cases for a "mostly UTF-8 but not quite" type of formats. For example, [[https://simonsapin.github.io/wtf-8/#generalized-utf-8][WTF-8]] is used to handle invalid UTF-16 conversions to UTF-8. The downside of these formats is that you loose compliance with the spec, which means you can't use third-party string libraries that operate on code points. The Remacs team [[https://github.com/remacs/remacs/blob/master/rust_src/src/multibyte.rs#L13-L33][had to rewrite the primitive string type]] in their project to support raw bytes.
+There are other use-cases for a "mostly UTF-8 but not quite" type of formats. For example, [[https://simonsapin.github.io/wtf-8/#generalized-utf-8][WTF-8]] is used to handle invalid UTF-16 conversions to UTF-8. The downside of these formats is that you lose compliance with the spec, which means you can't use third-party string libraries that operate on code points. The Remacs team [[https://github.com/remacs/remacs/blob/master/rust_src/src/multibyte.rs#L13-L33][had to rewrite the primitive string type]] in their project to support raw bytes.
 
 I am taking the [[https://docs.rs/bstr/latest/bstr/][bstr]] approach for my project. That assumes that strings are conventionally UTF-8, but will handle invalid bytes gracefully. Raw bytes are no longer distinguishable from other bytes, but I see that as an acceptable trade-off to use existing libraries.
 
@@ -1115,7 +1115,7 @@ It's no wonder that the maintainers decided to abandon this approach and instead
 Language implementations with automatic memory management often start out using exact rooting. At some point, all the careful rooting code gets to be so painful to maintain that a conservative scanner is introduced. The embedding API gets dramatically simpler, everyone cheers and breathes a sigh of relief, and work moves on (at a quicker pace!)
 #+end_quote
 
-However this comes with a tradeoff, you also loose the ability to precisely know what is really a pointer. This may not seem like a big deal, but it limits the kind of collectors [[https://lists.gnu.org/archive/html/emacs-devel/2015-09/msg00695.html][you can implement]] (such as a copying GC). The same post by the Spidermonkey team mentions their effort to "claw their way back to precision". They needed the performance improvements that can come with precise memory management techniques. Despite that, given all the complexity added to Emacs by GCPRO I think removing it was the right call.
+However this comes with a tradeoff, you also lose the ability to precisely know what is really a pointer. This may not seem like a big deal, but it limits the kind of collectors [[https://lists.gnu.org/archive/html/emacs-devel/2015-09/msg00695.html][you can implement]] (such as a copying GC). The same post by the Spidermonkey team mentions their effort to "claw their way back to precision". They needed the performance improvements that can come with precise memory management techniques. Despite that, given all the complexity added to Emacs by GCPRO I think removing it was the right call.
 
 Rust gives us a different option. It's powerful type system and affine types let us have both precision and a bug-free implementation. I wrote a whole post describing how you to [[https://coredumped.dev/2022/04/11/implementing-a-safe-garbage-collector-in-rust/][implement a safe GC in rust]],  so I won't expand on that here. Suffice it to say that the borrow checker can ensure that all stack roots are accounted for.
 

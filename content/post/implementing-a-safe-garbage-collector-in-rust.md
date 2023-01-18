@@ -59,7 +59,7 @@ let _ = &mut map; // take a mutable reference, invalidating our value1
 let value2 = map.get(key).unwrap(); // Use key to get our data back again
 ```
 
-Here we are storing our data inside the map and using some unique token (the key) to keep track of our value inside the data structure when we loose access to our reference. We can do the same thing with our gc `Context`. We store the roots inside before we garbage collect.
+Here we are storing our data inside the map and using some unique token (the key) to keep track of our value inside the data structure when we lose access to our reference. We can do the same thing with our gc `Context`. We store the roots inside before we garbage collect.
 
 ```rust
 struct Context {
