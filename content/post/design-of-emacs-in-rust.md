@@ -6,7 +6,7 @@ tags = ["rust", "emacs"]
 draft = false
 +++
 
-This is the third post in my series about writing an [Emacs core in Rust](https://coredumped.dev/2023/01/17/design-of-emacs-in-rust/). The [first post](https://coredumped.dev/2021/10/21/building-an-emacs-lisp-vm-in-rust/) laid out my initial observations and ideas about the language runtime. The [second post](https://coredumped.dev/2022/04/11/implementing-a-safe-garbage-collector-in-rust/) focused on building a safe garbage collector in rust using the type system. I initially stated that I wanted to reach the point where I could bootstrap bytecomp.el (the elisp byte compiler). That goal is reached[^fn:1], so I am providing an update on my latest learnings.
+This is the third post in my series about writing an [Emacs core in Rust](https://coredumped.dev/2023/01/17/design-of-emacs-in-rust/). The [first post](https://coredumped.dev/2021/10/21/building-an-emacs-lisp-vm-in-rust/) laid out my initial observations and ideas about the language runtime. The [second post](https://coredumped.dev/2022/04/11/implementing-a-safe-garbage-collector-in-rust/) focused on building a safe garbage collector in Rust using the type system. I initially stated that I wanted to reach the point where I could bootstrap bytecomp.el (the elisp byte compiler). That goal is reached[^fn:1], so I am providing an update on my latest learnings.
 
 
 ## Interpreter {#interpreter}
@@ -52,7 +52,7 @@ match obj {
 
 ## Representing Strings {#representing-strings}
 
-[UTF-8](https://en.wikipedia.org/wiki/UTF-8#Encoding) has become the de facto standard for representing text. Emacs closely follows the unicode standard, but uses an extended version of UTF-8 which enables support for raw bytes.  Let me explain.
+[UTF-8](https://en.wikipedia.org/wiki/UTF-8#Encoding) has become the de facto standard for representing text. Emacs closely follows the unicode standard, but uses an extended version of UTF-8 which enables support for raw bytes. Let me explain.
 
 One of the reasons that UTF-8 is so useful is because [ASCII characters](https://www.asciitable.com/) are automatically valid. These are the values between 0 and 127 and includes the English alphabet. If you assigned a code point to every value of the byte you could only have 256 possible characters. Instead, bigger code points are encoded using multiple bytes. The values above 127 are reserved for leading bytes in UTF-8. Thus a random value above the ASCII range may not be valid. However Emacs [extends unicode](https://www.gnu.org/software/emacs/manual/html_node/elisp/Text-Representations.html) to reserve the code points [0x3FFF80 to 0x3FFFFF](https://github.com/emacs-mirror/emacs/blob/master/src/character.h#L31-L47) as "raw bytes between 128 and 255".
 

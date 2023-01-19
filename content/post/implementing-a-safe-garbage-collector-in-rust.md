@@ -12,17 +12,17 @@ Updated: 2022-09-06
 
 ## Why use garbage collection? {#why-use-garbage-collection}
 
-virtually all non-trivial programs need some way to reuse memory. Rust does this by tracking every allocation statically to determine when it's no longer in use. However, this system is not flexible enough for some applications. In these cases Rust gives you [Rc](https://doc.rust-lang.org/std/rc/struct.Rc.html), the reference counting cell. This cell tracks the number of owners of a piece of memory at runtime. Reference counting has the advantage that is relatively easy to implement and integrates seamlessly with non-rc code. However, it also has two big downsides: It's slower[^fn:1] and it can't detect cyclic data (which lisp is full of). For these reasons (and others) dynamic languages often use garbage collection (GC) to manage data.
+Virtually all non-trivial programs need some way to reuse memory. Rust does this by tracking every allocation statically to determine when it's no longer in use. However, this system is not flexible enough for some applications. In these cases Rust gives you [Rc](https://doc.rust-lang.org/std/rc/struct.Rc.html), the reference counting cell. This cell tracks the number of owners of a piece of memory at runtime. Reference counting has the advantage that is relatively easy to implement and integrates seamlessly with non-rc code. However, it also has two big downsides: It's slower[^fn:1] and it can't detect cyclic data (which lisp is full of). For these reasons (and others) dynamic languages often use garbage collection (GC) to manage data.
 
 
 ## Why is GC hard? {#why-is-gc-hard}
 
-In his book _crafting interpreters_ Robert Nystrom has a whole [section](http://craftinginterpreters.com/garbage-collection.html#garbage-collection-bugs) dedicated to some of the "nasty bugs" you can have in a garbage collector. The problem lies in identifying all objects that are accessible in the heap. Once you have an object you know is live, it's fairly easy to trace through anything it points to and find other live data. But how do you find the pointers that don't have anything pointing to them? These pointers are problematically scattered across the stack or stored in machine registers. If you miss even one you open yourself up to memory unsafety.
+In his book _Crafting Interpreters_ Robert Nystrom has a whole [section](http://craftinginterpreters.com/garbage-collection.html#garbage-collection-bugs) dedicated to some of the "nasty bugs" you can have in a garbage collector. The problem lies in identifying all objects that are accessible in the heap. Once you have an object you know is live, it's fairly easy to trace through anything it points to and find other live data. But how do you find the pointers that don't have anything pointing to them? These pointers are problematically scattered across the stack or stored in machine registers. If you miss even one you open yourself up to memory unsafety.
 
 
 ### How does Emacs solve this problem? {#how-does-emacs-solve-this-problem}
 
-Emacs (and many C based GC implementations) solves this by recognizing that the stack is just a block of memory[^fn:2]. If an object can't be reach from the stack, it can't be reached at all. So when garbage collection is triggered, they will dump all registers to the stack and scan the it for anything that "looks like" a pointer. I say looks like because we can't _actually_ know if something is pointer or a number in range of a pointer. There is no type information in the hardware. So anything that might be a pointer is treated as a pointer and traced. However because we aren't sure, we can't move any of the gc data. In my implementation we are building a "precise" collector that knows exactly what's a pointer and what's not. That rules out blind stack scanning.
+Emacs (and many C based GC implementations) solves this by recognizing that the stack is just a block of memory[^fn:2]. If an object can't be reached from the stack, it can't be reached at all. So when garbage collection is triggered, they will dump all registers to the stack and scan the it for anything that "looks like" a pointer. I say looks like because we can't _actually_ know if something is a pointer or a number in the range of a pointer. There is no type information in the hardware. So anything that might be a pointer is treated as a pointer and traced. However because we aren't sure, we can't move any of the gc data. In my implementation we are building a "precise" collector that knows exactly what's a pointer and what's not. That rules out blind stack scanning.
 
 
 ### Let's start from the beginning {#let-s-start-from-the-beginning}
@@ -32,7 +32,7 @@ When we allocate a new object, we know that it is unaliased (nothing has a point
 
 ### Affine types {#affine-types}
 
-This key property of Rust (called affine types) is what is used in the gc library [Jospehine](https://docs.rs/josephine/latest/josephine/). They use Rust's borrow checker to ensure no references are live after collection. We do the same. All pointers into the GC heap borrowed from our allocator (called `Context`) via a immutable reference. When we call `garbage_collect`, we take a `&mut Context`, ensuring that all heap references are no longer accessible.
+This key property of Rust (called affine types) is what is used in the gc library [Jospehine](https://docs.rs/josephine/latest/josephine/). They use Rust's borrow checker to ensure no references are live after collection. We do the same. All pointers into the GC heap are borrowed from our allocator (called `Context`) via an immutable reference. When we call `garbage_collect`, we take a `&mut Context`, ensuring that all heap references are no longer accessible.
 
 ```rust
 let cx: &'ob Context = ...;
@@ -41,7 +41,7 @@ use_object(object);
 cx.garbage_collect(); // Object is no longer accessible
 ```
 
-However, If we  invalidate all references to the GC heap when we call `garbage_collect`, we can't access our data at all afterwards. We obviously need something more here.
+However, if we invalidate all references to the GC heap when we call `garbage_collect`, we can't access our data at all afterwards. We obviously need something more here.
 
 
 ## Rooting {#rooting}
@@ -81,9 +81,9 @@ Thankfully, I am not the first person to think about this problem. Saoirse has a
 
 The first observation is that if you don't drop or move a type on the stack, then its lifetime is perfectly stack-like. Shocking I know, but the really cool part about this is that we can use it to define the way we store the roots in `Context`. What if instead of storing them as a map, we store them as a stack instead? When something is rooted, it is pushed on the stack. When it drops, it is popped from the stack. This also solves our problem of creating a unique `Token` to find our object, because when we drop we know that our item will always be the top of the root stack. So no `Token` needed.
 
-In order for this to work we have to make sure the object can't move. This sounds just like the pinning! We define a new macro `root!` that works similarly to [pin_mut!](https://docs.rs/pin-utils/0.1.0/pin_utils/macro.pin_mut.html). This ensure our objects behaves in a stack-like manner, greatly simplifying the implementation.
+In order for this to work we have to make sure the object can't move. This sounds just like the pinning! We define a new macro `root!` that works similarly to [pin_mut!](https://docs.rs/pin-utils/0.1.0/pin_utils/macro.pin_mut.html). This ensures that our objects behave in a stack-like manner, greatly simplifying the implementation.
 
-As far as keeping our references around post garbage collection, we know that so long as our object is rooted it will be valid. We can keep a reference into the Gc heap until we unroot (i.e. the root goes out of scope). Our `root!` macro will change our reference from borrowing from `Context` to a borrowing from the root. So long as the root is live, our reference is valid; Even if we garbage collect.
+As far as keeping our references around post garbage collection, we know that so long as our object is rooted it will be valid. We can keep a reference into the Gc heap until we unroot (i.e. the root goes out of scope). Our `root!` macro will change our reference from borrowing from `Context` to borrowing from the root. So long as the root is live, our reference is valid; Even if we garbage collect.
 
 ```rust
 let object = cx.add("new");
@@ -132,9 +132,9 @@ cx.garbage_collect(); // Object is freed
 println!("{escape}"); // Oh No! Use after Free!
 ```
 
-We cannot move references out without some way of making sure they stay rooted. Thankfully shifgrethor comes to the rescue here again with it's `Gc` type.
+We cannot move references out without some way of making sure they stay rooted. Thankfully shifgrethor comes to the rescue here again with its `Gc` type.
 
-Once again we can model after the `pin` API, since we are trying to solve a similar problem. If you have a `Pin<P>` you know that the data point to by `P` will not move. Similarly, we create a `Root<T>` type that guarantees `T` will not move **and** it's rooted. We use the `struct_root!` macro to take a data structure `T` and returns a `&mut Root<T>` to it.
+Once again we can model after the `pin` API, since we are trying to solve a similar problem. If you have a `Pin<P>` you know that the data point to by `P` will not move. Similarly, we create a `Root<T>` type that guarantees `T` will not move **and** it's rooted. We use the `struct_root!` macro to take a data structure `T` and return a `&mut Root<T>` to it.
 
 ```rust
 let cx: Context = ...;
@@ -150,7 +150,7 @@ let slice: &[Root<Object>] = my_struct.as_slice();
 let object: Object<'_> = slice[0].as_obj();
 ```
 
-With this API, we can safely get a `&T` out when we need to. But mutating the `T` requires unsafe methods (like [map_unchecked_mut](https://doc.rust-lang.org/std/pin/struct.Pin.html#method.map_unchecked_mut)) to ensure we don't expose roots as in the example above. Using a similar approach to [pin projection](https://doc.rust-lang.org/std/pin/index.html#projections-and-structural-pinning) you can get a `Root` to the fields of rooted struct. For example if you have a `&Root<(T, U)>` it is safe get a `&Root<T>` or `&Root<U>`. For some the std lib types (vec, hashmap, option, etc) I have already implemented some safe mutation methods like `push`. If you have a structure that is just built out of these stdlib data structures, you could use a proc macro to derive the "root projection" methods for it.
+With this API, we can safely get a `&T` out when we need to. But mutating the `T` requires unsafe methods (like [map_unchecked_mut](https://doc.rust-lang.org/std/pin/struct.Pin.html#method.map_unchecked_mut)) to ensure we don't expose roots as in the example above. Using a similar approach to [pin projection](https://doc.rust-lang.org/std/pin/index.html#projections-and-structural-pinning) you can get a `Root` to the fields of a rooted struct. For example if you have a `&Root<(T, U)>` it is safe get a `&Root<T>` or `&Root<U>`. For some the std lib types (vec, hashmap, option, etc) I have already implemented some safe mutation methods like `push`. If you have a structure that is just built out of these stdlib data structures, you could use a proc macro to derive the "root projection" methods for it.
 
 
 ## The problem with aliasing {#the-problem-with-aliasing}
@@ -167,7 +167,7 @@ Oh, biscuits. What other options do we have? I am sure Rust has an `AliasCell` t
 
 _\* googles frantically \*_
 
-Nope. Though apparently we not the only ones who need this. The std lib created a [hack](https://github.com/rust-lang/rust/pull/82834) to avoid miscompilations with aliasing mutable references that is used in [Tokio](https://github.com/tokio-rs/tokio/pull/3654) as well. We could take that route (and I was really tempted to) but let's see if there is another way we could fix this.
+Nope. Though apparently we're not the only ones who need this. The std lib created a [hack](https://github.com/rust-lang/rust/pull/82834) to avoid miscompilations when aliasing mutable references, which is used in [Tokio](https://github.com/tokio-rs/tokio/pull/3654) as well. We could take that route (and I was really tempted to) but let's see if there is another way we could fix this.
 
 
 ### A level of indirection {#a-level-of-indirection}
@@ -181,7 +181,7 @@ pub(crate) struct Root<'a, T> {
 }
 ```
 
-Holding a `&mut Root<T>` does not alias with `T`, which let's the garbage collector do it works without undefined behavior. How do we actually get at the `T` though? We can define a new wrapper type `Rt` (similar to `Rc`) which let's us access `T` under the following conditions:
+Holding a `&mut Root<T>` does not alias with `T`, which lets the garbage collector do its work without undefined behavior. How do we actually get at the `T` though? We can define a new wrapper type `Rt` (similar to `Rc`) which lets us access `T` under the following conditions:
 
 1.  We can borrow `&Rt` from a `&Root`  at any time. There is no unsoundness here. In fact we will just implement `Deref` to make this easier.
 2.  We can borrow `&mut Rt` from a `&mut Root` if we have a `&Context`. This ensures that we can never call garbage collect while our mutable reference is live, because garbage collect requires a mutable borrow of `Context`!
@@ -199,7 +199,7 @@ impl<T> Root<'_, T> {
 
 ## A Safe GC {#a-safe-gc}
 
-So there you have it! A safe, precise, garbage collector in stable Rust! Now, this comes with a few caveats. It is often said that solving a general problem is three times harder then solving a specific problem. I am solving the specific problem here; creating a GC for my VM. This not ready to ship as a general purpose library without more work. But I am confident it could be made into a library if needed. Right now the garbage collector is about as naive as possible. But future changes will be under-the-hood improvements that don't change the API.
+So there you have it! A safe, precise, garbage collector in stable Rust! Now, this comes with a few caveats. It is often said that solving a general problem is three times harder then solving a specific problem. I am solving the specific problem here; creating a GC for my VM. It's not ready to ship as a general purpose library without more work. But I am confident it could be made into a library if needed. Right now the garbage collector is about as naive as possible. But future changes will be under-the-hood improvements that don't change the API.
 
 What I think is really cool is that the API is **safe**! You can't create this in C or C++; The type system is not powerful enough. Rust enables us to have "fearless garbage collection", and no longer be scared of the "nasty bugs" that we might create. As an anecdote, I was pleasantly surprised to find that when I turned on reclaiming memory in my gc, everything just worked first time; No memory leaks, no use-after-free. The API just took care of it at compile time. Miri was satisfied as well.
 
@@ -218,4 +218,4 @@ View the discussion on [Reddit](https://www.reddit.com/r/rust/comments/u21w97/im
     2.  RC can fall victim to "destructor avalanche" when the root of a chain of objects goes out of scope.  This results in unbounded pause times. Modern GC's by contrast are usually incremental, and will do work in small chunks to preventing long pauses.
 
     With all of these issues, there are techniques to try and mitigate them and get some performance back. But even a naive GC can often beat a well optimized RC implementation. And optimized GC (like JVM or V8) will always outclass reference counting. See [this SO post](https://softwareengineering.stackexchange.com/questions/30254/why-garbage-collection-if-smart-pointers-are-there) and [follow up post](https://web.archive.org/web/20200325094430/http://flyingfrogblog.blogspot.com/2010/12/why-gc-when-you-have-reference-counted.html) for more.
-[^fn:2]: I don't think this is true in Rust though. My best guess is that scanning the stack would violate some of rust's aliasing rules and be UB.
+[^fn:2]: I don't think this is true in Rust though. My best guess is that scanning the stack would violate some of Rust's aliasing rules and be UB.
