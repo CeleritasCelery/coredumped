@@ -6,7 +6,7 @@ tags = ["rust", "emacs"]
 draft = false
 +++
 
-This is the third post in my series about writing an Emacs core in Rust. The [first post](https://coredumped.dev/2021/10/21/building-an-emacs-lisp-vm-in-rust/) laid out my initial observations and ideas about the language runtime. The [second post](https://coredumped.dev/2022/04/11/implementing-a-safe-garbage-collector-in-rust/) focused on building a safe garbage collector in rust using the type system. I initially stated that I wanted to reach the point where I could bootstrap bytecomp.el (the elisp byte compiler). That goal is reached[^fn:1], so I am providing an update on my latest learnings.
+This is the third post in my series about writing an [Emacs core in Rust](https://coredumped.dev/2023/01/17/design-of-emacs-in-rust/). The [first post](https://coredumped.dev/2021/10/21/building-an-emacs-lisp-vm-in-rust/) laid out my initial observations and ideas about the language runtime. The [second post](https://coredumped.dev/2022/04/11/implementing-a-safe-garbage-collector-in-rust/) focused on building a safe garbage collector in rust using the type system. I initially stated that I wanted to reach the point where I could bootstrap bytecomp.el (the elisp byte compiler). That goal is reached[^fn:1], so I am providing an update on my latest learnings.
 
 
 ## Interpreter {#interpreter}
