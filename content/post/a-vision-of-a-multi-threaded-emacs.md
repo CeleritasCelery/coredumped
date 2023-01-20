@@ -48,7 +48,7 @@ So where do we want Emacs to land on this spectrum? The creator of [nogil](https
 
 The argument is that Level 2 is the right balance, because you avoid crazy bugs you get with unsafe languages but still have more flexibility then level 3. You should just give programmers the tools they need to build safe abstractions.
 
-I, however, disagree with that take. As the author said, shared memory is "notoriously difficult" to do correctly. As Emacs pulls in hundreds of packages, the potential for data races grows exponentially. Even Emacs current threads library [suffers from data races](https://nullprogram.com/blog/2018/05/31/) which is one of the reason I believe it has not seen much adoption. We need to make concurrency as pain free as possible if it going to be usable. Therefore I am in the "Emacs parallelism should be level 3" boat.
+I, however, disagree with that take. As the author said, shared memory is "notoriously difficult" to do correctly. As Emacs pulls in hundreds of packages, the potential for data races grows exponentially. Even Emacs' current threads library [suffers from data races](https://nullprogram.com/blog/2018/05/31/) which is one of the reasons I believe it has not seen much adoption. We need to make concurrency as pain free as possible if it is going to be usable. Therefore I am in the "Emacs parallelism should be level 3" boat.
 
 
 ### What are some requirements for parallel Emacs {#what-are-some-requirements-for-parallel-emacs}
@@ -56,13 +56,13 @@ I, however, disagree with that take. As the author said, shared memory is "notor
 So what are the standards we want for a multi-threaded Emacs implementation? Here is my short list:
 
 1.  No [function coloring](https://journal.stuffwithstuff.com/2015/02/01/what-color-is-your-function/) or special requirements on functions. One of Emacs' big advantages is the huge bulk of existing lisp code. We want to reuse as much as we can. This is generally only a problem with concurrent schemes like async/wait.
-2.  No data races. This will make program significantly easier to write correctly, but also is going to make our code more limited (\*\* _foreshadowing \*\*_).
+2.  No data races. This will make programs significantly easier to write correctly, but is also going to make our code more limited (\*\* _foreshadowing \*\*_).
 3.  We want the behavior of multi-threaded code to be as close to single-threaded code as possible. More on this later.
 
 
 ## A jumping off point {#a-jumping-off-point}
 
-Most people have never heard of TCL (or if they have they've never used it) but I find it has a [very simple approach](https://www.activestate.com/blog/threads-done-right-tcl/) to multi-threading. Essentially the an interpreter can work in its own thread, and carries with it all of its state. This is the multi-interpreter approach; Every thread starts in a clean environment with its own interpreter. "Messages" can be passed to any thread and they can return a result. In elisp it could look something like this.
+Most people have never heard of TCL (or if they have they've never used it) but I find it has a [very simple approach](https://www.activestate.com/blog/threads-done-right-tcl/) to multi-threading. Essentially the interpreter can work in its own thread, and carries with it all of its state. This is the multi-interpreter approach; Every thread starts in a clean environment with its own interpreter. "Messages" can be passed to any thread and they can return a result. In elisp it could look something like this.
 
 ```emacs-lisp
 (let ((thread1 (make-thread))
@@ -87,7 +87,7 @@ This is really simple and really effective, but it has some limitations. First i
 
 ## Can you pass the buffer please? {#can-you-pass-the-buffer-please}
 
-What if instead of needing to copy the buffers between threads, they could be shared? I know, I know, shared-memory is a footgun, but we are going to use mutex's! So it more like sharing in pre-school where everyone get's a turn. Each buffer is guarded by a mutex, and only one thread can have access to a buffer at a given time. The way you acquire the mutex is by switching to that buffer (using `set-buffer` , `switch-to-buffer`, or `with-current-buffer`). Just as you can only have a single "current buffer", you can only have the mutex for a single buffer at a time. A thread can switch to a buffer, do some operations, then release it. This is all well and good, but we have a major issue; shared-state.
+What if instead of needing to copy the buffers between threads, they could be shared? I know, I know, shared-memory is a footgun, but we are going to use mutexes! So it's more like sharing in pre-school where everyone gets a turn. Each buffer is guarded by a mutex, and only one thread can have access to a buffer at a given time. The way you acquire the mutex is by switching to that buffer (using `set-buffer` , `switch-to-buffer`, or `with-current-buffer`). Just as you can only have a single "current buffer", you can only have the mutex for a single buffer at a time. A thread can switch to a buffer, do some operations, then release it. This is all well and good, but we have a major issue; shared-state.
 
 You see, for a buffer to really be useful you need have the buffer local variables. Without those you can't even know the `major-mode`! But buffer local variable can share data with global variables, and each thread has its own set of globals. Consider the code below:
 
@@ -108,18 +108,18 @@ This would technically make multi-threaded emacs have different behavior then th
 
 As it currently stands you basically need to load your entire init file in each new thread. Why can't you just load the bare minimum elisp? Consider what would happen when a buffer local hook calls some function from another package? We need to make sure the code is loaded, and the only way we can do that is by loading the init file which contains all package initialization. There is also the problem that the state can get out sync. Each thread would start in a clean state, but this is not going to match the state of your main thread. This impedance mismatch is a clear source of bugs.
 
-What if we did something crazy? What if we said that all functions are shared between threads? If you think about it, this is almost a perfect match. Function rarely change, and when they do, you can just replace the whole function atomically. However to do this you would need to address the _functional literal mutation problem_ I talk about [here](https://coredumped.dev/2021/04/07/when-pure-function-lie/). Otherwise you could have multiple threads mutating the same function constants and potentially corrupt the VM state. But again, _implementation details_.
+What if we did something crazy? What if we said that all functions are shared between threads? If you think about it, this is almost a perfect match. Function rarely change, and when they do, you can just replace the whole function atomically. However to do this you would need to address the _functional literal mutation problem_ I talk about [here](https://coredumped.dev/2021/04/07/when-pure-function-lie/). Otherwise you could have multiple threads mutating the same function constants and potentially corrupting the VM state. But again, _implementation details_.
 
-Okay so that takes care of functions, but what about variables? Sharing variables would lead to data races, which is exactly what we are trying avoid. What if instead of sharing, we copied variables on demand? Hear me out! The first time a "sub-thread" does a lookup of a global variable, its value is copied from the main thread. This sets the initial value in that thread. From then on that copy of the value is "owned" by the thread and it can be mutated or read whenever. This would also help with the out-of-sync with the main thread problem we mentioned earlier. The state in your sub-thread would be much closer to the main global state. There could be an message queue internal to the VM that sends these requests back and forth. At certain points, the main thread would check the queue and send the values.
+Okay so that takes care of functions, but what about variables? Sharing variables would lead to data races, which is exactly what we are trying avoid. What if instead of sharing, we copied variables on demand? Hear me out! The first time a "sub-thread" does a lookup of a global variable, its value is copied from the main thread. This sets the initial value in that thread. From then on that copy of the value is "owned" by the thread and it can be mutated or read whenever. This would also help with the out-of-sync with the main thread problem we mentioned earlier. The state in your sub-thread would be much closer to the main global state. There could be a message queue internal to the VM that sends these requests back and forth. At certain points, the main thread would check the queue and send the values.
 
-But this also means that sub-threads could spend a decent amount of time waiting for the main thread to be ready to send the values it needs, at least at the start. There could be a couple ways to alleviate this. The one that comes to mind is you could cache the list of variables used at the call site of the thread creation. Then next time the thread is called you eagerly copy all the variables it has used before. This would make repeated initialization of the same thread much faster, but could also mean you get different variables the first time vs following times (if the calling function changed something immediately afterwards for example). As with everything; trade-offs.
+But this also means that sub-threads could spend a decent amount of time waiting for the main thread to be ready to send the values it needs, at least at the start. There could be a couple ways to alleviate this. The one that comes to mind is that you could cache the list of variables used at the call site of the thread creation. Then next time the thread is called you eagerly copy all the variables it had used before. This would make repeated initialization of the same thread much faster, but could also mean you get different variables the first time vs following times (if the calling function changed something immediately afterwards for example). As with everything; trade-offs.
 
 There is one big reason for all this song and dance around buffers locals, functions, and variables: reusing existing elisp code. Languages that were created with concurrency in mind have designed their languages around these considerations. But Emacs is a giant ball of mutable state. Taming that to do something useful in a multi-threaded world while still reusing existing code is tricky.
 
 
 ## Going Green {#going-green}
 
-So our threads are pretty cheap to create (as threads go), but not to keep around. Each elisp thread maps to a OS thread, and even when thread is idle it is still taking OS resources. Go and Clojure have solved this by creating so called green threads that are managed by the runtime. The green threads will be executed on OS threads, but they can be created, destroyed and managed by the VM. In Go you can create thousands of green threads and it will not impact the system. Don't try at home with OS threads.
+So our threads are pretty cheap to create (as threads go), but not to keep around. Each elisp thread maps to an OS thread, and even when thread is idle it is still taking OS resources. Go and Clojure have solved this by creating so called green threads that are managed by the runtime. The green threads will be executed on OS threads, but they can be created, destroyed and managed by the VM. In Go you can create thousands of green threads and it will not impact the system. Don't try at home with OS threads.
 
 Now that we have green threads, the observant among you will notice that we have basically reinvented goroutines. All we need to do is add channels and we can have something close to [core.async](https://clojuredocs.org/clojure.core.async). I imagine usage looking something like this:
 
@@ -159,21 +159,21 @@ Now that we have green threads, the observant among you will notice that we have
 
 ## So where does that leave us? {#so-where-does-that-leave-us}
 
-We have created some simple light weight green threads for Emacs. Well, we didn't actually create anything, but we sure did talk about it a lot! The things that I like about his approach is that threads are easy to create and use to accomplish work in parallel. There are no data races and footguns have been minimized. But I can still see a few open problems that are not solved:
+We have created some simple light weight green threads for Emacs. Well, we didn't actually create anything, but we sure did talk about it a lot! The thing I like about this approach is that threads are easy to create and use to accomplish work in parallel. There are no data races and footguns have been minimized. But I can still see a few open problems that are not solved:
 
-1.  The most important buffer in Emacs is the one you are currently editing. But with the mutex scheme, you can't use any other threads to work on that buffer! If you want to index or search or syntax-highlight the buffer, that still needs to use your main thread, meaning that the user is blocked. I don't like it, but not sure of a clean way to fix it.
-2.  What about when you need to iterate over all buffers (like with `ibuffer`)? Here you would need to acquire the mutex for each one in turn. If another thread is using a buffer the main thread will have to wait. Hopefully sub-threads would choose to do the work incrementally, giving time for the thread to yield the mutex.
-3.  Since the sub-threads take their global variables from the main thread, You can't load code in parallel. Only the main thread can load code that can be used by everyone.
+1.  The most important buffer in Emacs is the one you are currently editing. But with the mutex scheme, you can't use any other threads to work on that buffer! If you want to index or search or syntax-highlight the buffer, that still needs to use your main thread, meaning that the user is blocked. I don't like it, but am not sure of a clean way to fix it.
+2.  What about when you need to iterate over all buffers (like with `ibuffer`)? Here you would need to acquire the mutex for each one in turn. If another thread is using a buffer the main thread will have to wait. Hopefully sub-threads would choose to do their work incrementally, giving time for the thread to yield the mutex.
+3.  Since the sub-threads take their global variables from the main thread, you can't load code in parallel. Only the main thread can load code that can be used by everyone.
 4.  I haven't even mentioned a bunch of other multi-threading concerns like cancellation, atomics, garbage collection, message queue buffering, semaphores, signals, error reporting, debugging, concurrent data structures, C integration, deadlock, and livelock to name a few. Perhaps those are a topic for a future post.
 
-It has been fun to speculation about multi-threaded Emacs. But the real question is, would it be worth it? Emacs has gotten along just fine with a single thread; In fact many (most?) dynamic languages have. I would guess that threads would only be useful in about 10% of the programming tasks you would do in elisp. But when threads can be used, they would be big boon.
+It has been fun to speculate about multi-threaded Emacs. But the real question is, would it be worth it? Emacs has gotten along just fine with a single thread; In fact many (most?) dynamic languages have. I would guess that threads would only be useful in about 10% of the programming tasks you would do in elisp. But when threads can be used, they would be big boon.
 
 As with everything in engineering, concurrency comes with trade-offs. Implementing a scheme like I described would be a monumental task. It would probably involve a complete rewrite of the core runtime[^fn:2]. Also anytime you make an interpreter multi-threaded, you make single threaded code slower[^fn:3]. There is no avoiding that. If 90% of code is still single-threaded, is that worth the cost?
 
 Anyways, I would love to get some feedback on the ideas presented. Are there obvious holes that I missed? Would this scheme be useful? Do you know way that these could be implemented (or would not be possible to implement)? How does this compare to other dynamic languages? Do you prefer the more "thread-like" or "green-thread-like" approach? Is there a way to address some of the problems presented above?
 
 
-### have a comment? {#have-a-comment}
+### Have a comment? {#have-a-comment}
 
 View the discussion on [Reddit](https://www.reddit.com/r/emacs/comments/utzxir/a_vision_of_a_multithreaded_emacs/), [Hacker News](https://news.ycombinator.com/item?id=31559818), or send me an [email](mailto:troy.hinckley@dabrev.com)
 
