@@ -6,6 +6,9 @@ from matplotlib.ticker import FuncFormatter
 import seaborn as sns
 sns.set()
 
+
+SHOW_PLOT = True
+
 def time_formatter_1p(x, _):
     if x == 0:
         return ''
@@ -55,7 +58,8 @@ def report_overhead():
     # save the plot as a png
     plt.title('overhead')
     plt.savefig('../static/images/buffer_overhead.png')
-    plt.show()
+    if SHOW_PLOT:
+        plt.show()
 
 def report_edit_overhead():
     data = {
@@ -79,7 +83,8 @@ def report_edit_overhead():
     # save the plot as a png
     plt.title('edit overhead')
     plt.savefig('../static/images/buffer_edit_overhead.png')
-    plt.show()
+    if SHOW_PLOT:
+        plt.show()
 
 
 def report_from_string():
@@ -98,7 +103,8 @@ def report_from_string():
     plt.ylabel('time (ms)')
     plt.title('From<String>')
     plt.savefig('../static/images/from_string.png')
-    plt.show()
+    if SHOW_PLOT:
+        plt.show()
 
 def report_from_str():
     data = {
@@ -116,7 +122,8 @@ def report_from_str():
     plt.ylabel('time (ms)')
     plt.title('From<str>')
     plt.savefig('../static/images/from_str.png')
-    plt.show()
+    if SHOW_PLOT:
+        plt.show()
 
 def report_save():
     data = {
@@ -132,7 +139,8 @@ def report_save():
     plt.ylabel('time (μs)')
     plt.title('ToString')
     plt.savefig('../static/images/save.png')
-    plt.show()
+    if SHOW_PLOT:
+        plt.show()
 
 
 def report_move_gap():
@@ -146,7 +154,8 @@ def report_move_gap():
     plt.title('move gap')
     # save the plot as a png
     plt.savefig('../static/images/buffer_move_gap.png')
-    plt.show()
+    if SHOW_PLOT:
+        plt.show()
 
 
 def report_resize():
@@ -166,7 +175,8 @@ def report_resize():
     plt.title('resize')
     # save the plot as a png
     plt.savefig('../static/images/buffer_resize.png')
-    plt.show()
+    if SHOW_PLOT:
+        plt.show()
 
 def report_realworld():
     data = {
@@ -216,11 +226,12 @@ def report_realworld():
     subs[1, 2].remove()
 
     plt.savefig('../static/images/realworld.png')
-    plt.show()
+    if SHOW_PLOT:
+        plt.show()
 
 def report_smart_diff():
     naive = [367.70e3, 408.52e3, 414.83e3, 494.08e3, 658.56e3, 957.86e3, 1.3638e6, 1.7848e6, 2.2606e6, 2.7199e6, 3.1930e6, 3.6569e6, 4.0212e6, 4.5252e6, 4.9372e6]
-    smart = [364.50e3, 395.56e3, 406.54e3, 458.55e3, 576.12e3, 748.48e3, 994.40e3, 1.2723e6, 1.7882e6, 2.2947e6, 2.6341e6, 2.9289e6, 3.1035e6, 3.3365e6, 3.5993e6]
+    smart = [364.50e3, 395.56e3, 406.54e3, 458.55e3, 576.12e3, 748.48e3, 994.40e3, 1.2723e6, 1.7882e6, 2.3022e6, 2.6341e6, 2.9289e6, 3.1035e6, 3.3365e6, 3.5993e6]
     distance = [10e3, 50e3, 100e3, 250e3, 500e3, 1e6, 2e6, 3e6, 4e6, 5e6, 6e6, 7e6, 8e6, 9e6, 10e6]
     # plot naive and smart as lines graphs as a function of distance
 
@@ -230,13 +241,32 @@ def report_smart_diff():
     plt.gca().yaxis.set_major_formatter(formatter_y)
     plt.gca().xaxis.set_major_formatter(formatter_x)
     # shade the region between the two lines
-    plt.fill_between(distance, naive, smart, alpha=0.3)
+    plt.fill_between(distance, naive, smart, alpha=0.2)
     plt.plot(distance, smart, label='smart')
     plt.xlabel('distance between first and last cursor')
     plt.ylabel('time')
     plt.title('Multiple cursors comparision')
     plt.legend()
-    plt.show()
+    plt.savefig('../static/images/smart_diff.png')
+    # if SHOW_PLOT:
+    #     plt.show()
+    plt.clf()
+
+    # take the perecentage difference between the two lines and plot that
+    percent_diff = np.abs(np.array(naive) - np.array(smart)) / np.array(naive) * 100
+    plt.plot(distance, percent_diff)
+    plt.gca().yaxis.set_major_formatter(FuncFormatter(lambda x, _: f'{x:.0f}%'))
+    plt.gca().xaxis.set_major_formatter(formatter_x)
+    plt.xlabel('distance between first and last cursor')
+    plt.ylabel('percent difference')
+    plt.ylim(0, 100)
+    # shade the area under the line
+    plt.fill_between(distance, percent_diff, alpha=0.2)
+    # smooth the line
+    plt.title('Multiple cursors diff')
+    plt.savefig('../static/images/smart_diff_percent.png')
+    if SHOW_PLOT:
+        plt.show()
 
 
 

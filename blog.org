@@ -1221,7 +1221,22 @@ To start this off, we have a set of 4 [[https://github.com/josephg/editing-trace
 Aside from ropey, all the containers have comparable performance. In all benchmarks but one, the gap buffer is the fastest, but not by any meaningful amount. I also want to emphasize here how crazy fast each of these are. The traces are thousands or tens of thousands of edits long, and even the slowest is still completed in milliseconds. For interactive edits, any container will be blazing fast.
 
 *** multiple cursors
-Back in 2017, Chris Wellons wrote a [[https://nullprogram.com/blog/2017/09/07/][blog post]] titled "Gap Buffers Are Not Optimized for Multiple Cursors". It makes the case that since gap buffers have to move the gap buffer across the whole range for each edit, they don't perform well with multiple cursors. [[https://github.com/hauleth/sad.vim#why-not-multiple-cursors][This]] fact [[https://cdacamar.github.io/data%20structures/algorithms/benchmarking/text%20editors/c++/editor-data-structures/][has]] now [[https://github.com/emacs-ng/emacs-ng/issues/378#issuecomment-907577662][become]] part [[https://vms.wwwtech.de/notes/360][of]] Internet [[https://vuink.com/post/ahyycebtenz-d-dpbz/blog/2017/09/07][lore]].
+Back in 2017, Chris Wellons wrote a [[https://nullprogram.com/blog/2017/09/07/][blog post]] titled "Gap Buffers Are Not Optimized for Multiple Cursors". It makes the case that since gap buffers have to move the gap buffer back to the first cursor for each edit (a O(n) operation), they don't scale well with multiple cursors. [[https://github.com/hauleth/sad.vim#why-not-multiple-cursors][This]] idea [[https://cdacamar.github.io/data%20structures/algorithms/benchmarking/text%20editors/c++/editor-data-structures/][has]] now [[https://github.com/emacs-ng/emacs-ng/issues/378#issuecomment-907577662][become]] part [[https://vms.wwwtech.de/notes/360][of]] Internet [[https://vuink.com/post/ahyycebtenz-d-dpbz/blog/2017/09/07][lore]].
+
+I was not convinced by this argument. For one thing, there are no benchmarks, and many things that make sense intuitively don't actually play out that way in the real world. Also you can avoid the overhead of moving the gap back to first cursor with this one weird trick (computer scientists hate him!): Every time you do an edit, you reverse the direction you iterate through the cursors. If in one edit you go from the first cursor to the last, then the next edit you go from the last cursor to the first. This saves the overhead of moving the gap back to the first cursor each time. Essentially you just sweep the gap back and forth as you make edits. Let's benchmark this and see how well it works.
+
+< gap buffer overhead >
+
+It looks like this trick works. Let's zoom in on the percent overhead of the naive version.
+
+<Percent overhead>
+
+Once the distance gets large enough we have about 20-30% overhead. This shows that even in the naive case, most of the time is dominated by performing the actual edits, not moving the cursor back. Also The overhead doesn't grow linearly with the distance between the cursors.
+
+**** compared to ropes
+How does this compare to the rope implementations? We will start with cursors 100 bytes apart and increase the total cursor count. I am leaving out ropey, because it large outlier in performance.
+
+
 
 *** worst case
 
@@ -1232,7 +1247,7 @@ Gap buffers and ropes are not the only data structures used in text editing. Hea
 
 There are no optimized implementation of a piece table in rust, at least that I could find.
 *** what should you use?
-So is this to say that everyone should switch over at start using gap buffers? Not quite. Ropes are really powerful data structure, and they never have the latency spikes associated with resizing or moving the gap. In real world editing scenario's it isn't the best case or even the average case, it's the worst case tail latency that really matters. With ropes you get worse case O(logn) behavior for all editing operations. As files get larger the O(N) behavior of gap buffers starts to shows itself.
+So is this to say that everyone should switch over at start using gap buffers? Not quite. Ropes are really powerful data structure, and they never have the latency spikes associated with resizing or moving the gap. In real world editing scenario's it isn't the best case or even the average case, it's the worst case tail latency that really matters. With ropes you get worse case O(logn) behavior for all editing operations. As files get larger the O(n) behavior of gap buffers starts to shows itself.
 
 And ropes have other benefits besides the good performance. Both Crop and Ropey support concurrent access from multiple threads.This lets you take snapshots to do asynchronous saves, backups, or multi-user edits.
 
