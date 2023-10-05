@@ -1144,3 +1144,102 @@ Join the [[https://discu.eu/?q=https%3A%2F%2Fcoredumped.dev%2F2023%2F01%2F17%2Fd
 [fn:2] Too be fair, bootstrapping is a really hard problem. You would need something to bootstrap a bytecompiler written in the language you are bytecompiling. My approach was to create a minimal compiler in rust, but you could also take the approach of using bytecode written in a previous build of Emacs. [[https://ziglang.org/news/goodbye-cpp/#the-solution-space][This post by the Zig team]] covers some of the many ways you can bootstrap a language.
 
 [fn:3] Another advantage of ~nil~ being the symbol with offset 0 is that you can now test for nil by comparing with zero, which usually has it's own dedicated instruction.
+
+** TODO Gap buffers
+I have been working on a hobby project to reimagine the C core of Emacs in Rust. On this journey I reached the point where I needed some way to represent the text of a buffer. The simplest approach is to just use a large string or array of lines. However these each suffer from poor performance as the either the size or line length of text increases.
+
+GNU Emacs has famously used a gap buffer to represent editable text. It's even mentioned by name on the [[https://en.wikipedia.org/wiki/Gap_buffer][wikipedia]] entry for it. Gap buffers have advantage of allowing fast local edits with a fairly simple design. I see it as analogous to the more general data structure, the "array". Because really a gap buffer is just an array that is optimized for inserting at a "cursor" instead of at the end. Using a gap buffer has served Emacs well over many decades.
+
+Despite this, Emacs seems largely alone in it's choice in the modern world. Most popular editors today use some variation of either a [[https://code.visualstudio.com/blogs/2018/03/23/text-buffer-reimplementation][piece table]] or a [[https://blog.jetbrains.com/fleet/2022/02/fleet-below-deck-part-ii-breaking-down-the-editor/][rope]]. Rather then storing data as large contiguous array, these data structures chop the buffer into small chunks and operate on those. This enables them to avoid the O(N) penalty of moving the cursor when doing edits far away and the latency of resizing the buffer. Chris Wellons has a [[https://nullprogram.com/blog/2017/09/07/][post]] entitled "Gap Buffers Are Not Optimized for Multiple Cursors" giving an intuitive explanation for why gap buffers don't do well for non-localized edits.
+
+So it seemed like the most obvious solution was to pick from one of Rusts [[https://crates.io/search?q=ropey][many rope crates]] and call it a day. But I was not entirely convinced. Modern computers can operate very quickly over linear memory. Despite looking worse on paper, arrays will often beat more complex data structures in the real world, even on operations that they are technically O(N). I wanted to see for myself. So I built a gap buffer and stacked it up against the competition.
+
+*** design
+My gap buffer is fairly true to the original design, with one big change; I store metrics about the buffer in a separate tree. These metrics include things like char and line position, but could in theory include anything you want (like UTF-16 [[https://docs.rs/ropey/latest/ropey/struct.Rope.html#method.char_to_utf16_cu][code units]]). This means that /finding/ an arbitrary position in the buffer becomes at worse O(Log N), but we still have to pay the cost of moving the gap.
+*** text data structure shoot out
+The ropes that I will be comparing against are [[https://docs.rs/ropey/latest/ropey/index.html][ropey]], [[https://docs.rs/crop/0.3.0/crop/index.html][crop]], and [[https://docs.rs/jumprope/latest/jumprope/index.html][jumprope]]. The last one is technically implemented via [[https://en.wikipedia.org/wiki/Skip_list][skip lists]], but that is really an implementation detail, the performance should be similar.
+
+*** overhead
+Let's start out with memory overhead. The way to read this is if something has 50% overhead, that means you need 1.5GB of memory to open a 1GB file.
+
+<Overhead figure>
+
+Woah! Jumprope is way outside the norm here, almost doubling the memory needed to open a file[fn:2]. Crop and Ropey and much closer to what you would expect. However this is really the ideal case of opening a new file. Each rope node will be perfectly filled and the tree properly balanced.
+
+**** edit overhead
+Let's look at the overhead when edits are applied to the text. These could be things like large search and replace or multiple cursors. This tends to leave the ropes in a less ideal state, and hence have higher overhead.
+
+<Overhead edits>
+
+Fairly significant change for all ropes. Jumprope has gone through the roof, jumping so high that I didn't even bother expanding the plot to show it. Even crop, which had the lowest rope overhead in ideal conditions, has jumped almost 20x. The gap buffer on the other hand has barely moved. Unlike ropes, a gap buffer is always in ideal state with regards to layout.
+
+*** buffer cost
+Before we jump into benchmarks comparing ropes and gap buffers. Let's look at the time it takes to complete the two highest latency operations on gap buffers: resizing and moving the gap.
+
+**** resize
+Insertion in a gap buffer is /amortized/ O(1), just like an appending to an vector. But also like vectors, they only achieve this in the amortized case. Vectors need to resize once they get full, and this is a O(N) operation. But since the time between resizing is N appends, it averages out to O(1). Gap buffers are similar, except that we don't usually continue to grow the gap as the text get's larger (that would lead to more overhead). In this sense, it isn't truly O(1) insertion time, but even if it was, we generally care about the latency in interactive applications more then we care about average case.
+
+<Resize>
+
+Note that both axis are logarithmic. We can see that the cost to resize grows linearly with the size of the buffer, which is what we would expect. With a 1GB[fn:1] file, it takes about 125ms to resize, which is definitely perceptible.
+
+**** moving the gap
+
+How long does it take to slide the gap a given distance? This delay is added anytime we edit a different part of the buffer then we are currently in.
+
+<Move gap>
+
+Moving the gap 1GB is significantly faster then resizing 1GB, taking only 23ms. This isn't nothing, but is small enough to be imperceptible. Of course since this is a O(N) relationship, moving the gap even farther will have proportionally higher cost.
+
+In practice these latencies will be less of an issue, because giant files tend to be log files and auto generated output, which are rarely editing. But it is still an unavoidable cost of storing data in contiguous fixed-sized structure.
+
+*** creating
+
+**** creating from a String
+Let see how long it take to create a new data structure from a ~String~. The string below is 1GB in size.
+
+<Build from String>
+
+Gap buffer is significantly faster then the rest, but it's not really a fair comparison. A ~String~ is essentially already a gap buffer. It has the string text, followed by some amount of unused capacity which can be used as a gap. So in this case we don't need to copy or allocate at all, instead reusing the allocation from the string. That won't always be the case, so how do things compare if we force them all to the copy the source text. This would be the case when loading from a file.
+
+<Build from str>
+
+Forcing a copy makes the gap buffer take about three times as long, but it is still faster then the rope implementations.
+
+**** saving
+What about saving a file? Here we are not going to benchmark the actual file system overhead, but instead use "writing the contents to a string" as a proxy.
+
+<Save>
+
+All containers are pretty comparable on this front.
+
+*** real world
+To start this off, we have a set of 4 [[https://github.com/josephg/editing-traces][real world]] benchmarks from the author of jumprope. These are recordings or "traces" of actual people editing some text in an editor. They represent a good baseline for performance.
+
+<Plot>
+
+Aside from ropey, all the containers have comparable performance. In all benchmarks but one, the gap buffer is the fastest, but not by any meaningful amount. I also want to emphasize here how crazy fast each of these are. The traces are thousands or tens of thousands of edits long, and even the slowest is still completed in milliseconds. For interactive edits, any container will be blazing fast.
+
+*** multiple cursors
+Back in 2017, Chris Wellons wrote a [[https://nullprogram.com/blog/2017/09/07/][blog post]] titled "Gap Buffers Are Not Optimized for Multiple Cursors". It makes the case that since gap buffers have to move the gap buffer across the whole range for each edit, they don't perform well with multiple cursors. [[https://github.com/hauleth/sad.vim#why-not-multiple-cursors][This]] fact [[https://cdacamar.github.io/data%20structures/algorithms/benchmarking/text%20editors/c++/editor-data-structures/][has]] now [[https://github.com/emacs-ng/emacs-ng/issues/378#issuecomment-907577662][become]] part [[https://vms.wwwtech.de/notes/360][of]] Internet [[https://vuink.com/post/ahyycebtenz-d-dpbz/blog/2017/09/07][lore]].
+
+*** worst case
+
+*** search benchmarks
+
+*** what about piece tables?
+Gap buffers and ropes are not the only data structures used in text editing. Heavy hitters like Atom and VsCode use a piece table (or [[https://code.visualstudio.com/blogs/2018/03/23/text-buffer-reimplementation][piece tree]]) instead of either. Rather then storing the buffer chopped up in a pieces and update those as you go instead, you store the original buffer and then each edit is stored separately as part of table or tree.  This makes things like undo and redo builtin to the data structure.
+
+There are no optimized implementation of a piece table in rust, at least that I could find.
+*** what should you use?
+So is this to say that everyone should switch over at start using gap buffers? Not quite. Ropes are really powerful data structure, and they never have the latency spikes associated with resizing or moving the gap. In real world editing scenario's it isn't the best case or even the average case, it's the worst case tail latency that really matters. With ropes you get worse case O(logn) behavior for all editing operations. As files get larger the O(N) behavior of gap buffers starts to shows itself.
+
+And ropes have other benefits besides the good performance. Both Crop and Ropey support concurrent access from multiple threads.This lets you take snapshots to do asynchronous saves, backups, or multi-user edits.
+
+Despite all that, gap buffers showed they can do quite well when placed against more "advanced" data structures. Be very careful before you bet against arrays.
+
+
+**** have a comment?
+[fn:1] GB here means 2^30, as it should when [[https://www.merriam-webster.com/dictionary/kilobyte][talking about base-2 memory]]. The only people who think it should be 10^9 are hard drive salesmen and the type of people who like to correct all their friends by saying "it's centripetal, not centrifugal force!". And also "gibibyte" sounds like Pokémon invented by a first grader.
+
+[fn:2] [[https://github.com/josephg/jumprope-rs/issues/5][github.com/josephg/jumprope-rs/issues/5]]
