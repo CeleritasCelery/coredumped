@@ -269,6 +269,47 @@ def report_smart_diff():
         plt.show()
 
 
+def report_cursor_count():
+    buffer = [3.2550e3, 31.742e3, 80.447e3, 163.29e3, 359.67e3, 740.61e3, 1.9475e6, 2.8052e6, 4.1142e6]
+    crop = [4.9751e3, 56.685e3, 154.84e3, 316.62e3, 638.29e3, 1.2668e6, 3.1005e6, 4.3250e6, 6.1946e6]
+    jumprope = [3.7554e3, 47.612e3, 134.79e3, 289.29e3, 602.58e3, 1.2237e6, 3.1034e6, 4.4057e6, 6.4385e6]
+    ropey = [9.5603e3, 139.37e3, 349.06e3, 704.12e3, 1.4088e6, 2.7899e6, 6.9205e6, 9.4853e6, 13.231e6]
+    count = [10, 100, 250, 500, 1000, 2000, 5000, 7000, 10000]
+    # plot everything as a function of count
+    formatter_y = FuncFormatter(time_formatter)
+    plt.plot(count, buffer, label='buffer')
+    plt.plot(count, crop, label='crop')
+    plt.plot(count, jumprope, label='jumprope')
+    plt.plot(count, ropey, label='ropey')
+    plt.gca().yaxis.set_major_formatter(formatter_y)
+    plt.xlabel('cursor count')
+    plt.ylabel('time')
+    plt.legend()
+    plt.savefig('../static/images/cursor_count.png')
+    if SHOW_PLOT:
+        plt.show()
+
+
+def report_cursor_distance():
+    buffer = [29.813e3, 31.162e3, 32.722e3, 39.129e3, 44.745e3, 47.369e3, 55.927e3, 63.854e3, 80.070e3, 93.982e3, 106.09e3, 135.85e3, 152.83e3, 177.20e3, 198.60e3, 212.99e3]
+    crop = [42.163e3, 56.570e3, 69.711e3, 72.096e3, 66.456e3, 59.695e3, 55.133e3, 51.822e3, 50.629e3, 51.458e3, 52.825e3, 54.583e3, 55.148e3, 55.450e3, 56.270e3, 58.363e3]
+    jumprope = [39.153e3, 47.440e3, 44.820e3, 46.508e3, 48.359e3, 50.597e3, 51.534e3, 52.648e3, 54.249e3, 56.147e3, 57.499e3, 59.465e3, 60.277e3, 60.763e3, 61.921e3, 64.173e3]
+    ropey = [123.19e3, 136.92e3, 139.29e3, 140.90e3, 142.66e3, 143.12e3, 144.75e3, 145.31e3, 146.71e3, 150.16e3, 148.60e3, 150.62e3, 152.24e3, 152.30e3, 151.16e3, 154.46e3]
+    count = [10, 100, 250, 500, 750, 1000, 1250, 1500, 2000, 2500, 3000, 4000, 4250, 4500, 5000, 6000]
+    # plot everything as a function of count
+    formatter_y = FuncFormatter(time_formatter)
+    plt.plot(count, buffer, label='buffer')
+    plt.plot(count, crop, label='crop')
+    plt.plot(count, jumprope, label='jumprope')
+    plt.plot(count, ropey, label='ropey')
+    plt.gca().yaxis.set_major_formatter(formatter_y)
+    plt.xlabel('cursor distance (bytes)')
+    plt.ylabel('time')
+    plt.legend()
+    plt.savefig('../static/images/cursor_distance.png')
+    if SHOW_PLOT:
+        plt.show()
+
 
 
 # report_overhead()
@@ -279,4 +320,6 @@ def report_smart_diff():
 # report_from_str()
 # report_save()
 # report_realworld()
-report_smart_diff()
+# report_smart_diff()
+# report_cursor_count()
+report_cursor_distance()

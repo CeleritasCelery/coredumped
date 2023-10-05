@@ -1234,18 +1234,22 @@ It looks like this trick works. Let's zoom in on the percent overhead of the nai
 Once the distance gets large enough we have about 20-30% overhead. This shows that even in the naive case, most of the time is dominated by performing the actual edits, not moving the cursor back. Also The overhead doesn't grow linearly with the distance between the cursors.
 
 **** compared to ropes
-How does this compare to the rope implementations? We will start with cursors 100 bytes apart and increase the total cursor count. I am leaving out ropey, because it large outlier in performance.
+How does this compare to the rope implementations? We will start with cursors 100 bytes apart and increase the total cursor count.
 
+<Cursor count>
 
+The relationship is almost perfectly linear, with crop and jumprope about twice as fast as ropey but 50% slower then the gap buffer. This relationship continues as we move beyond 10,000 cursors. So having high numbers of cursors doesn't impact gap buffers.
 
-*** worst case
+But one thing might cause trouble is the distance /between/ the cursors. Let's benchmark it:
+
+<Cursor distance>
+
+Now the weakness of gap buffers start to show. The distance between cursors does not really matter to ropes, because every edit is O(logn), however it matters a lot to gap buffers. You can see that the ropes are all roughly flat, but the gap buffer has a positive slope. After about 1K jumprope and crop start to beat it, and after about 4K it falls behind ropey.
+
+However there is nothing special about multiple cursors with this relationship. Gap buffers struggle with long distance edits no matter what mechanism is used. It would be the same with macros, search and replace, etc.
 
 *** search benchmarks
 
-*** what about piece tables?
-Gap buffers and ropes are not the only data structures used in text editing. Heavy hitters like Atom and VsCode use a piece table (or [[https://code.visualstudio.com/blogs/2018/03/23/text-buffer-reimplementation][piece tree]]) instead of either. Rather then storing the buffer chopped up in a pieces and update those as you go instead, you store the original buffer and then each edit is stored separately as part of table or tree.  This makes things like undo and redo builtin to the data structure.
-
-There are no optimized implementation of a piece table in rust, at least that I could find.
 *** what should you use?
 So is this to say that everyone should switch over at start using gap buffers? Not quite. Ropes are really powerful data structure, and they never have the latency spikes associated with resizing or moving the gap. In real world editing scenario's it isn't the best case or even the average case, it's the worst case tail latency that really matters. With ropes you get worse case O(logn) behavior for all editing operations. As files get larger the O(n) behavior of gap buffers starts to shows itself.
 
