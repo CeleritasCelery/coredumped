@@ -1145,7 +1145,11 @@ Join the [[https://discu.eu/?q=https%3A%2F%2Fcoredumped.dev%2F2023%2F01%2F17%2Fd
 
 [fn:3] Another advantage of ~nil~ being the symbol with offset 0 is that you can now test for nil by comparing with zero, which usually has it's own dedicated instruction.
 
-** TODO Gap buffers
+** TODO text showdown: gap buffers vs ropes
+:PROPERTIES:
+:EXPORT_DATE: 2023-08-07
+:EXPORT_FILE_NAME: text-showdown-gap-buffers-vs-ropes
+:END:
 I have been working on a hobby project to reimagine the C core of Emacs in Rust. On this journey I reached the point where I needed some way to represent the text of a buffer. The simplest approach is to just use a large string or array of lines. However these each suffer from poor performance as the either the size or line length of text increases.
 
 GNU Emacs has famously used a gap buffer to represent editable text. It's even mentioned by name on the [[https://en.wikipedia.org/wiki/Gap_buffer][wikipedia]] entry for it. Gap buffers have advantage of allowing fast local edits with a fairly simple design. I see it as analogous to the more general data structure, the "array". Because really a gap buffer is just an array that is optimized for inserting at a "cursor" instead of at the end. Using a gap buffer has served Emacs well over many decades.

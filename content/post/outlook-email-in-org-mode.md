@@ -27,7 +27,7 @@ The process I use to write my email with `org-mode` is as follows
 
 Using an org capture buffer is perfect for writing email, because I can save it as a draft if needed, or export the contents and then throw the buffer away. Also, most of the time, the content of interest is what I am working on that moment, so I have everything at hand. Here is the simple template that I use to write emails.
 
-```emacs-lisp { linenos=table, linenostart=1 }
+```emacs-lisp { linenos=true, linenostart=1 }
 (add-to-list
  'org-capture-templates
  '("e" "Email"
@@ -40,7 +40,7 @@ Using an org capture buffer is perfect for writing email, because I can save it 
 
 Normally if you wanted to export an org header as HTML, you would use `C-c C-e` to open the export menu. `hH` will open a dedicated buffer with the HTML contents of your org file. From there you can copy the whole buffer. However I find it much faster to use this helper function (bound to `C-x M-e`).
 
-```emacs-lisp { linenos=table, linenostart=6 }
+```emacs-lisp { linenos=true, linenostart=6 }
 (defun export-org-email ()
   "Export the current email org buffer and copy it to the
 clipboard"
@@ -60,7 +60,7 @@ The default HTML exported by org is spartan to say the least. Thankfully it is p
 
 As you can see in the function below, I have this CSS at the local path `~/org/org-html-themes/styles/email/css/email.css`. You will need to change this to where ever you keep the CSS file.
 
-```emacs-lisp { linenos=table, linenostart=16 }
+```emacs-lisp { linenos=true, linenostart=16 }
 (defun org-email-html-head ()
   "Create the header with CSS for use with email"
   (concat
