@@ -42,8 +42,8 @@ def report_overhead():
     data = {
         'buffer': 1.1,
         'crop': 3.6,
-        'jumprope': 90.4,
         'ropey': 11.0,
+        'jumprope': 90.4,
     }
     # make a bar graph of the data
     plt.bar(data.keys(), data.values())
@@ -65,8 +65,8 @@ def report_edit_overhead():
     data = {
         'buffer': 1.9,
         'crop': 70.1,
-        'ropey': 80.7,
         'jumprope': 365.7,
+        'ropey': 80.7,
     }
     # make a bar graph of the data
     plt.bar(data.keys(), data.values())
@@ -79,7 +79,7 @@ def report_edit_overhead():
         plt.text(x, y + 0.5, '%.1f%%' % y, ha='center')
     # plot jumprope separately because it is so high
     # make the text bold
-    plt.text(3, 90, '%.1f%%' % data['jumprope'], ha='center',  fontsize=20)
+    plt.text(2, 90, '%.1f%%' % data['jumprope'], ha='center',  fontsize=20)
     # save the plot as a png
     plt.title('edit overhead')
     plt.savefig('../static/images/buffer_edit_overhead.png')
@@ -145,8 +145,9 @@ def report_save():
 
 def report_move_gap():
     keys = ['1KB', '32KB', '1MB', '32MB', '1GB']
-    values_ns = [15.6, 430.4, 18.47e3, 652e3, 22.95e6]
+    values_ns = [15.6, 428.1, 18.13e3, 642e3, 22.5e6]
     plt.semilogy(keys, values_ns)
+    plt.text(keys[-1], values_ns[-1], time_formatter(values_ns[-1], None), ha='center')
     formatter_y = FuncFormatter(time_formatter)
     plt.gca().yaxis.set_major_formatter(formatter_y)
     plt.xlabel('size')
@@ -160,12 +161,15 @@ def report_move_gap():
 
 def report_resize():
     keys = [2**10, 2**15, 2**20, 2**25, 2**30]
-    values_ns = [103.4, 1.45e3, 53.2e3, 3.79e6, 124.58e6]
-    plt.semilogy(keys, values_ns)
+    values = [211.87, 2.4718e3, 65.234e3, 6.4077e6, 251.41e6]
+    create = [129.65, 1.1374e3, 36.912e3, 3.5040e6, 145.27e6]
+
+    total = np.array(values) - np.array(create)
+    plt.semilogy(keys, total)
     formatter_y = FuncFormatter(time_formatter)
     formatter_x = FuncFormatter(size_formatter)
     plt.gca().yaxis.set_major_formatter(formatter_y)
-    plt.text(keys[-1], values_ns[-1], time_formatter(values_ns[-1], None), ha='center')
+    plt.text(keys[-1], total[-1], time_formatter(total[-1], None), ha='center')
     # make the x axis logarithmic
     plt.xscale('log', base=2)
     plt.gca().xaxis.set_major_formatter(formatter_x)
@@ -248,8 +252,8 @@ def report_smart_diff():
     plt.title('Multiple cursors comparision')
     plt.legend()
     plt.savefig('../static/images/smart_diff.png')
-    # if SHOW_PLOT:
-    #     plt.show()
+    if SHOW_PLOT:
+        plt.show()
     plt.clf()
 
     # take the perecentage difference between the two lines and plot that
@@ -311,6 +315,51 @@ def report_cursor_distance():
         plt.show()
 
 
+def report_search_full():
+    buffer =   [0, 31.309e3, 4.3073e6, 8.6157e6, 12.960e6, 17.228e6, 21.688e6, 25.933e6, 30.285e6, 34.488e6]
+    crop =     [0, 72.753e3, 31.477e6, 68.626e6, 114.99e6, 132.51e6, 134.82e6, 164.66e6, 232.65e6, 253.14e6]
+    jumprope = [0, 138.55e3, 41.465e6, 81.055e6, 110.87e6, 120.40e6, 156.95e6, 166.65e6, 206.09e6, 254.81e6]
+    ropey =    [0, 86.966e3, 42.887e6, 66.483e6, 100.26e6, 118.14e6, 148.11e6, 186.52e6, 225.03e6, 241.91e6]
+    move_gap = [0, 8.2886e3, 1.3293e6, 2.6857e6, 4.0778e6, 5.4573e6, 7.0241e6, 8.7642e6, 10.221e6, 11.841e6]
+    distance = [0, 1048576, 134217728, 268435456, 402653184, 536870912, 671088640, 805306368, 939524096, 1073741824]
+
+    formatter_y = FuncFormatter(time_formatter)
+    formatter_x = FuncFormatter(size_formatter)
+    plt.plot(distance, buffer, label='buffer')
+    plt.plot(distance, crop, label='crop')
+    plt.plot(distance, jumprope, label='jumprope')
+    plt.plot(distance, ropey, label='ropey')
+
+
+    plt.gca().yaxis.set_major_formatter(formatter_y)
+    plt.gca().xaxis.set_major_formatter(formatter_x)
+    plt.xticks([2**20, 2**28, 2*2**28, 3*2**28, 2**30])
+    plt.xlabel('text size')
+    plt.ylabel('time')
+    plt.legend()
+    plt.savefig('../static/images/search.png')
+    if SHOW_PLOT:
+        plt.show()
+
+    plt.clf()
+    plt.gca().yaxis.set_major_formatter(formatter_y)
+    plt.gca().xaxis.set_major_formatter(formatter_x)
+    plt.xticks([2**20, 2**28, 2*2**28, 3*2**28, 2**30])
+    plt.plot(distance, buffer, label='buffer')
+    plt.plot(distance, crop, label='crop')
+    plt.plot(distance, jumprope, label='jumprope')
+    plt.plot(distance, ropey, label='ropey')
+    # add move_gap to buffer and plot the result
+    buffer = np.array(buffer) + np.array(move_gap)
+    plt.plot(distance, buffer, label='buffer + move gap')
+    plt.xlabel('text size')
+    plt.ylabel('time')
+    plt.legend()
+    plt.savefig('../static/images/search_move.png')
+    if SHOW_PLOT:
+        plt.show()
+
+
 
 # report_overhead()
 # report_edit_overhead()
@@ -320,6 +369,7 @@ def report_cursor_distance():
 # report_from_str()
 # report_save()
 # report_realworld()
-# report_smart_diff()
+report_smart_diff()
 # report_cursor_count()
-report_cursor_distance()
+# report_cursor_distance()
+# report_search_full()
