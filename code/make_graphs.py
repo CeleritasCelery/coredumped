@@ -40,7 +40,7 @@ def size_formatter(num, _):
 
 def report_overhead():
     data = {
-        'buffer': 1.1,
+        'buffer': 1.22,
         'crop': 3.6,
         'ropey': 11.0,
         'jumprope': 90.4,
@@ -63,7 +63,7 @@ def report_overhead():
 
 def report_edit_overhead():
     data = {
-        'buffer': 1.9,
+        'buffer': 2.63,
         'crop': 70.1,
         'jumprope': 365.7,
         'ropey': 80.7,
@@ -216,22 +216,80 @@ def report_realworld():
         },
     }
     # for each element in data create a bar chart. put all the charts in one figure
-    _, subs = plt.subplots(nrows=2, ncols=3)
-
     formatter_y = FuncFormatter(time_formatter_1p)
-    for i, (key, value) in enumerate(data.items()):
-        x = i % 2
-        y = i % 3
-        subs[x, y].bar(value.keys(), value.values())
-        subs[x, y].bar(value.keys(), value.values(), color=['b', 'y', 'g', 'r'])
-        subs[x, y].set_title(key)
-        subs[x, y].yaxis.set_major_formatter(formatter_y)
+    plt.rcParams["figure.figsize"] = (8,4)
 
-    subs[1, 2].remove()
+    fig, subs = plt.subplots(ncols=2)
+    key = "automerge"
+    value = data[key]
+    subs[0].bar(value.keys(), value.values())
+    subs[0].bar(value.keys(), value.values(), color=['b', 'y', 'g', 'r'])
+    subs[0].set_title(key)
+    subs[0].yaxis.set_major_formatter(formatter_y)
 
-    plt.savefig('../static/images/realworld.png')
+    key = "rustcode"
+    value = data[key]
+    subs[1].bar(value.keys(), value.values())
+    subs[1].bar(value.keys(), value.values(), color=['b', 'y', 'g', 'r'])
+    subs[1].set_title(key)
+    subs[1].yaxis.set_major_formatter(formatter_y)
+
+    plt.subplots_adjust(wspace=0.3)
+
+    plt.savefig('../static/images/realworld1.png')
+
     if SHOW_PLOT:
         plt.show()
+    # plt.clf()
+
+    _, subs = plt.subplots(ncols=2)
+    key = "sveltecomponent"
+    value = data[key]
+    subs[0].bar(value.keys(), value.values())
+    subs[0].bar(value.keys(), value.values(), color=['b', 'y', 'g', 'r'])
+    subs[0].set_title(key)
+    subs[0].yaxis.set_major_formatter(formatter_y)
+
+    key = "seph-blog1"
+    value = data[key]
+    subs[1].bar(value.keys(), value.values())
+    subs[1].bar(value.keys(), value.values(), color=['b', 'y', 'g', 'r'])
+    subs[1].set_title(key)
+    subs[1].yaxis.set_major_formatter(formatter_y)
+
+    plt.subplots_adjust(wspace=0.3, hspace=0.3)
+    plt.savefig('../static/images/realworld2.png')
+
+    if SHOW_PLOT:
+        plt.show()
+    # plt.clf()
+
+    _, subs = plt.subplots(ncols=2)
+    key = "friendsforever"
+    value = data[key]
+    subs[0].bar(value.keys(), value.values())
+    subs[0].bar(value.keys(), value.values(), color=['b', 'y', 'g', 'r'])
+    subs[0].set_title(key)
+    subs[0].yaxis.set_major_formatter(formatter_y)
+
+    subs[1].remove()
+
+    plt.subplots_adjust(wspace=0.3, hspace=0.3)
+    plt.savefig('../static/images/realworld3.png')
+
+    if SHOW_PLOT:
+        plt.show()
+    plt.clf()
+
+
+def report_append():
+    data = {
+        'buffer': 131.8,
+        'crop': 225.3,
+        'jumprope': 808.7,
+        'ropey': 779.1,
+    }
+
 
 def report_smart_diff():
     naive = [367.70e3, 408.52e3, 414.83e3, 494.08e3, 658.56e3, 957.86e3, 1.3638e6, 1.7848e6, 2.2606e6, 2.7199e6, 3.1930e6, 3.6569e6, 4.0212e6, 4.5252e6, 4.9372e6]
@@ -361,15 +419,15 @@ def report_search_full():
 
 
 
-# report_overhead()
-# report_edit_overhead()
+report_overhead()
+report_edit_overhead()
 # report_move_gap()
 # report_resize()
 # report_from_string()
 # report_from_str()
 # report_save()
 # report_realworld()
-report_smart_diff()
+# report_smart_diff()
 # report_cursor_count()
 # report_cursor_distance()
 # report_search_full()
