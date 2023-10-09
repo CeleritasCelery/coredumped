@@ -42,8 +42,8 @@ def report_overhead():
     data = {
         'buffer': 1.22,
         'crop': 3.6,
-        'ropey': 11.0,
         'jumprope': 90.4,
+        'ropey': 11.0,
     }
     # make a bar graph of the data
     plt.bar(data.keys(), data.values())
@@ -419,13 +419,13 @@ def report_search_full():
 
 
 
-# report_overhead()
+report_overhead()
 # report_edit_overhead()
 # report_move_gap()
 # report_resize()
 # report_from_string()
 # report_from_str()
-report_save()
+# report_save()
 # report_realworld()
 # report_smart_diff()
 # report_cursor_count()
