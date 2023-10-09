@@ -3,7 +3,7 @@ title = "Text showdown: Gap Buffers vs Ropes"
 author = ["Troy Hinckley"]
 date = 2023-08-09
 tags = ["rust", "emacs", "data-structures"]
-draft = true
+draft = false
 +++
 
 I have been working on a hobby project to reimagine the C core of [Emacs in Rust](https://coredumped.dev/tags/rust/). On this journey, I reached the point where I needed some way to represent the text of a buffer. The simplest approach is to just use a large string or array of lines. However these each suffer from poor performance as either the size or line length of text increases.

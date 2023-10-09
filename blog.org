@@ -1145,7 +1145,7 @@ Join the [[https://discu.eu/?q=https%3A%2F%2Fcoredumped.dev%2F2023%2F01%2F17%2Fd
 
 [fn:3] Another advantage of ~nil~ being the symbol with offset 0 is that you can now test for nil by comparing with zero, which usually has it's own dedicated instruction.
 
-** TODO Text showdown: Gap Buffers vs Ropes :rust:emacs:data_structures:
+** DONE Text showdown: Gap Buffers vs Ropes :rust:emacs:data_structures:
 :PROPERTIES:
 :EXPORT_DATE: 2023-08-09
 :EXPORT_FILE_NAME: text-showdown-gap-buffers-vs-ropes
