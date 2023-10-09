@@ -127,16 +127,16 @@ def report_from_str():
 
 def report_save():
     data = {
-        'buffer': 20,
-        'crop': 39.3,
-        'jumprope': 32.4,
-        'ropey': 109.9,
+        'buffer': 101.79,
+        'crop': 119.32,
+        'jumprope': 131.96,
+        'ropey': 141.69,
     }
     # make a bar graph of the data
     plt.bar(data.keys(), data.values())
     plt.bar(data.keys(), data.values(), color=['b', 'y', 'g', 'r'])
     plt.xlabel('Container')
-    plt.ylabel('time (μs)')
+    plt.ylabel('time (ms)')
     plt.title('ToString')
     plt.savefig('../static/images/save.png')
     if SHOW_PLOT:
@@ -419,13 +419,13 @@ def report_search_full():
 
 
 
-report_overhead()
-report_edit_overhead()
+# report_overhead()
+# report_edit_overhead()
 # report_move_gap()
 # report_resize()
 # report_from_string()
 # report_from_str()
-# report_save()
+report_save()
 # report_realworld()
 # report_smart_diff()
 # report_cursor_count()

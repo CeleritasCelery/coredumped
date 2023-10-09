@@ -1,5 +1,5 @@
 +++
-title = "text showdown: gap buffers vs ropes"
+title = "Text showdown: Gap Buffers vs Ropes"
 author = ["Troy Hinckley"]
 date = 2023-08-09
 tags = ["rust", "emacs", "data-structures"]
@@ -12,24 +12,24 @@ GNU Emacs has famously used a gap buffer to represent editable text. It's even m
 
 I see it as analogous to the more general data structure, the "array". A gap buffer is just an array that is optimized for inserting at a "cursor" instead of at the end. Using a gap buffer has served Emacs well over many decades.
 
-Despite this, Emacs seems largely alone in its choice in the modern world. Most popular editors today use some variation of either a [piece table](https://code.visualstudio.com/blogs/2018/03/23/text-buffer-reimplementation) or a [rope](https://blog.jetbrains.com/fleet/2022/02/fleet-below-deck-part-ii-breaking-down-the-editor/). Rather than storing data as a large contiguous array, these data structures chop the buffer into small chunks and operate on those. This enables them to avoid the O(N) penalty of moving the cursor when doing edits far away and the latency of resizing the buffer.
+Despite this, Emacs seems largely alone in its choice in the modern world. Most popular editors today use some variation of either a [piece table](https://code.visualstudio.com/blogs/2018/03/23/text-buffer-reimplementation) or a [rope](https://blog.jetbrains.com/fleet/2022/02/fleet-below-deck-part-ii-breaking-down-the-editor/). Rather than storing data as a large contiguous array, these data structures chop the buffer into small chunks and operate on those. This enables them to avoid the O(n) penalty of moving the cursor when doing edits far away and the latency of resizing the buffer.
 
 Rust has [many rope crates](https://crates.io/search?q=ropey) that have had a lot of optimization work put in. The obvious thing to do was to just pick one and move on. But I wanted to see for myself how the gap buffer holds up to these more "advanced" data structures. Modern computers can operate very quickly over linear memory. So I built a gap buffer and stacked it up against the competition.
 
 
-## design {#design}
+## Design {#design}
 
 My gap buffer ([link](https://github.com/CeleritasCelery/rune/tree/master/crates/text-buffer)) is fairly true to the original design, with one big change; I store [metrics](https://github.com/CeleritasCelery/rune/blob/master/crates/text-buffer/src/metric.rs) about the buffer in a separate tree. These metrics include things like char and line position, but could, in theory, include anything you want (like UTF-16 [code units](https://docs.rs/ropey/latest/ropey/struct.Rope.html#method.char_to_utf16_cu)). This means that _finding_ an arbitrary position in the buffer becomes at worse O(logn), but we still have to pay the cost of moving the gap.
 
 The ropes that I will be comparing against are [Ropey](https://docs.rs/ropey/latest/ropey/index.html), [Crop](https://docs.rs/crop/0.3.0/crop/index.html), and [Jumprope](https://docs.rs/jumprope/latest/jumprope/index.html). The last one is technically implemented via [skip lists](https://en.wikipedia.org/wiki/Skip_list), but that's an implementation detail and the performance should be similar.
 
 
-## gap buffer costs {#gap-buffer-costs}
+## Gap buffer costs {#gap-buffer-costs}
 
 Before we jump into [benchmarks](https://github.com/CeleritasCelery/rope-benches) comparing ropes and gap buffers. Let's look at the time it takes to complete the two highest latency operations on gap buffers: resizing and moving the gap. This is a cost that ropes don't share because their worst case for an editing operation is O(logn).
 
 
-### resize {#resize}
+### Resize {#resize}
 
 Insertion in a gap buffer is O(1), just like an appending to a vector. But also like vectors, they only achieve this in the amortized case. Vectors need to resize once they get full, and this is a O(N) operation. But since the time between resizing is N appends, it averages out to O(1). Gap buffers are similar, except that we don't usually continue to grow the gap as the text gets larger (that would lead to more overhead). In this sense, it isn't truly O(1) insertion time, but even if it was, we generally care about the latency in interactive applications more than we care about the average case.
 
@@ -38,7 +38,7 @@ Insertion in a gap buffer is O(1), just like an appending to a vector. But also 
 Note that both axes are logarithmic. We can see that the cost to resize grows linearly with the size of the buffer, which is what we would expect. With a 1GB[^fn:1] file, it takes a little over 100ms to resize, which is starting to be perceptible.
 
 
-### moving the gap {#moving-the-gap}
+### Moving the gap {#moving-the-gap}
 
 How long does it take to slide the gap a given distance? This delay is added anytime we edit a different part of the buffer than we are currently in. The farther the move, the longer it takes. Unlike resizing which (from a user's perspective) strikes randomly, this latency is easier to predict. You generally know when you are editing something farther than where you are currently at.
 
@@ -49,7 +49,7 @@ Moving the gap 1GB is significantly faster than resizing 1GB, taking only 22ms. 
 In practice, these latencies will be less of an issue, because giant files tend to be log files and auto-generated output, which are rarely edited. However, it is still an unavoidable cost of storing data in a contiguous fixed-sized structure.
 
 
-## memory overhead {#memory-overhead}
+## Memory overhead {#memory-overhead}
 
 For our comparisons, let's start with memory overhead. The way to read this is if something has 50% overhead, that means you need 1.5GB of memory to open a 1GB file.
 
@@ -58,7 +58,7 @@ For our comparisons, let's start with memory overhead. The way to read this is i
 Woah! Jumprope is way outside the norm here, almost doubling the memory needed to open a file[^fn:2]. Crop and Ropey are much closer to what you would expect. However, this is the ideal case of opening a new file. Each rope node will be perfectly filled and the tree properly balanced.
 
 
-### edit overhead {#edit-overhead}
+### Edit overhead {#edit-overhead}
 
 Let's look at the overhead when edits are applied to the text. These could be things like large search and replace or multiple cursors. This tends to leave the ropes in a less ideal state, and hence have higher overhead.
 
@@ -67,7 +67,7 @@ Let's look at the overhead when edits are applied to the text. These could be th
 Fairly significant change for all ropes. Jumprope has gone through the roof, jumping so high that I didn't even bother expanding the plot to show it. Even crop, which had the lowest rope overhead in ideal conditions, has jumped almost 20x. The gap buffer on the other hand has barely moved. Unlike ropes, a gap buffer is always in ideal state with regards to layout. This unique property will show up later in the searching benchmarks.
 
 
-## real world {#real-world}
+## Real world {#real-world}
 
 To compare editing performance we have a set of 5 [real world](https://github.com/josephg/editing-traces) benchmarks from the author of Jumprope. These are recordings or "traces" of actual people editing some text in an editor. Each benchmark starts empty, then replays thousands of edits and arrives at the end text.
 
@@ -78,12 +78,12 @@ To compare editing performance we have a set of 5 [real world](https://github.co
 Aside from Ropey, all the containers have comparable performance. In all benchmarks but one, the gap buffer is the fastest, but not by any meaningful amount. This demonstrates that in the average case, insert and delete performance is fairly comparable between the different data structures. Let's zoom in on some specialized use cases.
 
 
-## creating {#creating}
+## Creating {#creating}
 
 So we have a sense of the memory overhead and average performance for the different containers. Here we will compare the time to load and save the text from the data structures.
 
 
-### creating from a String {#creating-from-a-string}
+### Creating from a String {#creating-from-a-string}
 
 How long does it take to create a new data structure from a `String`? The string below is 1GB in size.
 
@@ -96,20 +96,20 @@ The gap buffer is significantly faster than the rest, but it's not really a fair
 Forcing a copy makes the gap buffer take about three times as long, but it is still faster than the rope implementations.
 
 
-### saving {#saving}
+### Saving {#saving}
 
-What about saving a file? Here we are not going to benchmark the actual file system overhead, but instead use "writing the contents to a string" as a proxy.
+What about saving a file? Here we are not going to benchmark the actual file system overhead, but instead use "writing the contents of 1GB to a string" as a proxy.
 
 {{< figure src="/images/save.png" >}}
 
 All containers are pretty comparable on this front.
 
 
-## multiple cursors {#multiple-cursors}
+## Multiple cursors {#multiple-cursors}
 
 Back in 2017, Chris Wellons wrote a [blog post](https://nullprogram.com/blog/2017/09/07/) titled "Gap Buffers Are Not Optimized for Multiple Cursors". It makes the case that since gap buffers have to move the gap buffer back to the first cursor for each edit (a O(n) operation), they don't scale well with multiple cursors. So instead of using multiple cursors, you should use some other editing operation like macros. [This](https://github.com/hauleth/sad.vim#why-not-multiple-cursors) idea [has](https://cdacamar.github.io/data%20structures/algorithms/benchmarking/text%20editors/c++/editor-data-structures/) now [become](https://github.com/emacs-ng/emacs-ng/issues/378#issuecomment-907577662) part [of](https://vms.wwwtech.de/notes/360) Internet [lore](https://vuink.com/post/ahyycebtenz-d-dpbz/blog/2017/09/07).
 
-I was not convinced by this argument. For one thing, there are no benchmarks, and many things that make sense intuitively don't play out that way in the real world. Also I realized you can avoid the overhead of moving the gap back to the first cursor with this one weird trick (computer scientists hate him!): Every time you do an edit, you reverse the direction you iterate through the cursors. If in one edit you go from the first cursor to the last, then in the next edit you go from the last cursor to the first. This saves the overhead of moving the gap back to the first cursor each time. Essentially you just sweep the gap back and forth as you make edits. Let's benchmark this and see how well it works.
+I was not convinced by this argument. For one thing, there are no benchmarks, and many things that make sense intuitively don't play out that way in the real world. Also, I realized you can avoid the overhead of moving the gap back to the first cursor with this one weird trick (computer scientists hate him!): Every time you do an edit, you reverse the direction you iterate through the cursors. If in one edit you go from the first cursor to the last, then in the next edit you go from the last cursor to the first. This saves the overhead of moving the gap back to the first cursor each time. Essentially you just sweep the gap back and forth as you make edits. Let's benchmark this and see how well it works.
 
 {{< figure src="/images/smart_diff.png" >}}
 
@@ -120,7 +120,7 @@ It looks like this trick works. Let's zoom in on the percent overhead of the nai
 Once the distance gets large enough we have about 20-30% overhead. This shows that even in the naive case, most of the time is dominated by performing the actual edits, not moving the cursor back. Also, The overhead doesn't grow linearly with the distance between the cursors.
 
 
-### compared to ropes {#compared-to-ropes}
+### Compared to ropes {#compared-to-ropes}
 
 How does this compare to the rope implementations? We will start with cursors 100 bytes apart and increase the total cursor count.
 
@@ -137,7 +137,7 @@ Now the weakness of gap buffers starts to show. The distance between cursors doe
 However, there is nothing special about multiple cursors with this relationship. Gap buffers struggle with long-distance edits no matter what mechanism is used. It would be the same with macros, search and replace, etc. Given that, I would claim that gap buffers are optimized for multiple cursors just fine, it is non-local edits that are the source of the issue.
 
 
-## searching {#searching}
+## Searching {#searching}
 
 People don't only edit text, they also analyze it. One of the most common ways to do this is via searching. Rust has a highly optimized regex crate, but it only operates on slices. This is [problematic](https://github.com/xi-editor/xi-editor/issues/1192) for [ropes](https://github.com/helix-editor/helix/pull/211) since they store the buffer in many small allocations. Currently, the best way to do a regex search over a rope is to copy all the chunks out into a separate allocation and perform your search over that[^fn:3]. There is some work to create a [streaming API version](https://github.com/rust-lang/regex/issues/425) of regex based on `regex-automata`, but it still has not been developed and may never prove to be as fast as slice searching.
 
@@ -156,7 +156,7 @@ It adds about 30% overhead to the gap search. This still doesn't put it anywhere
 That being said, many new parser libraries like Tree-sitter are already designed to operate on non-contiguous chunks, so the need for search becomes less important. We will see how this plays out in the future.
 
 
-## what should you use? {#what-should-you-use}
+## What should you use? {#what-should-you-use}
 
 So is this to say that everyone should switch over and start using gap buffers? Not quite. Ropes are really powerful data structures, and they never have the latency spikes associated with resizing or moving the gap. In real-world editing scenario's it isn't the best case or even the average case, it's the worst-case tail latency that really matters. With ropes, you get worse case O(logn) behavior for all editing operations. As files get larger the extra latency associated with gap buffers starts to show itself. On the flip side, in my experience the larger a file is the less likely I am to be editing it, but the more likely I am to be searching it. These trade-offs work well in favor of gap buffers.
 
@@ -165,7 +165,7 @@ Ropes have other benefits besides good performance. Both Crop and Ropey support 
 Despite all that, gap buffers showed they can do quite well when placed against more "advanced" data structures. One of their key advantages is that gap buffers are always in an ideal state. They never need to worry about fragmentation or being unbalanced like trees do. The way I see it, gap buffers are better for searching and memory usage, but ropes are better at non-local editing patterns. Despite their simplicity, gap buffers can hold their own in the modern world. Maybe Emacs was on to something.
 
 
-### have a comment? {#have-a-comment}
+### Have a comment? {#have-a-comment}
 
 Join the discussion or send me an [email](mailto:troy.hinckley@dabrev.com). Benchmarks can be found [here](https://github.com/CeleritasCelery/rope-benches).
 
