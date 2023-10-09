@@ -1282,7 +1282,7 @@ Ropes have other benefits besides good performance. Both Crop and Ropey support 
 Despite all that, gap buffers showed they can do quite well when placed against more "advanced" data structures. One of their key advantages is that gap buffers are always in an ideal state. They never need to worry about fragmentation or being unbalanced like trees do. The way I see it, gap buffers are better for searching and memory usage, but ropes are better at non-local editing patterns. Despite their simplicity, gap buffers can hold their own in the modern world. Maybe Emacs was on to something.
 
 **** Have a comment?
-Join the discussion or send me an [[mailto:troy.hinckley@dabrev.com][email]]. Benchmarks can be found [[https://github.com/CeleritasCelery/rope-benches][here]].
+Join the [[https://discu.eu/?q=https%3A%2F%2Fcoredumped.dev%2F2023%2F08%2F09%2Ftext-showdown-gap-buffers-vs-ropes%2F&submit_title=Text%20showdown%3A%20Gap%20Buffers%20vs%20Ropes%20%E2%80%A2%20Core%20Dumped][discussion]] or send me an [[mailto:troy.hinckley@dabrev.com][email]]. Benchmarks can be found [[https://github.com/CeleritasCelery/rope-benches][here]].
 
 [fn:1] GB here means 2^30, as it should when [[https://www.merriam-webster.com/dictionary/kilobyte][talking about base-2 memory]]. The only people who think it should be 10^9 are hard drive salesmen and the type of people who like to correct all their friends by saying "It's centripetal, not centrifugal force!". Also "gibibyte" sounds like Pokémon invented by a first grader.
 
