@@ -3,7 +3,7 @@ languageCode = "en-us"
 title = "Core Dumped"
 theme = "hyde-hyde"
 metaDataFormat = "toml"
-copyright = "(c) 2021 Troy Hinckley."
+copyright = "(c) 2023 Troy Hinckley."
 
 [permalinks]
     post = "/:year/:month/:day/:slug/"
@@ -21,6 +21,7 @@ copyright = "(c) 2021 Troy Hinckley."
     gitlab = "foconoco"
     linkedin = "troy-hinckley-13779162"
     email = "troyhinckley@dabrev.com"
+    rss = "index.xml"
 
 [markup]
   [markup.highlight]
