@@ -406,7 +406,7 @@ This is another reason that it is hard to make a true multi-threaded elisp. You 
 
 When I first saw this behavior, I thought for sure that I found a bug in the language implementation. This couldn't possibly be intentional. But after investigating more, I found that this was expected... at least if you are lisp programmer.
 ****  Have a comment?
-View the discussion on [[https://www.reddit.com/r/emacs/comments/mm70re/when_pure_functions_lie/?utm_source=share&utm_medium=web2x&context=3][Reddit]] or send me an [[mailto:troy.hinckley@dabrev.com][email]]
+Join the [[https://discu.eu/?q=https%3A%2F%2Fcoredumped.dev%2F2021%2F04%2F07%2Fwhen-pure-function-lie%2F&submit_title=When%20pure%20function%20lie%20%E2%80%A2%20Core%20Dumped][discussion]] or send me an [[mailto:troy.hinckley@dabrev.com][email]]
 
 [fn:1] As several people [[https://www.reddit.com/r/emacs/comments/mm70re/when_pure_functions_lie/gtq1oir?utm_source=share&utm_medium=web2x&context=3][pointed out]], the reason this works in python is because it is making a copy of the list every time it returns. You could introduce the same issue in python using default arguments, which are not copied. To protect against this in lisp, you can use ~(vector 1 2 3)~ instead of ~'(1 2 3)~ and it will make a copy of the vector.
 
@@ -872,7 +872,7 @@ Overall, I am pretty happy with how it turned out. That being said, there is *a 
 I am going to continue work on bootstrapping more elisp files to eventually bootstrap the elisp byte compiler and use that to test my VM. I was forced to take break from that effort and implement the garbage collector because I kept using too much memory! Implementing the garbage collector was a much bigger rabbit hole than I expected. Hopefully this will help move the community forward on the quest for a Rust GC.
 
 ****  Have a comment?
-View the discussion on [[https://www.reddit.com/r/rust/comments/u21w97/implementing_a_safe_garbage_collector_in_rust/][Reddit]] or [[https://news.ycombinator.com/item?id=31166368][Hacker News]], send me an [[mailto:troy.hinckley@dabrev.com][email]], or open an [[https://github.com/CeleritasCelery/rune/issues/new][issue]].
+Join the [[https://discu.eu/?q=https%3A%2F%2Fcoredumped.dev%2F2022%2F04%2F11%2Fimplementing-a-safe-garbage-collector-in-rust%2F&submit_title=Implementing%20a%20safe%20garbage%20collector%20in%20Rust%20%E2%80%A2%20Core%20Dumped][discussion]], send me an [[mailto:troy.hinckley@dabrev.com][email]], or open an [[https://github.com/CeleritasCelery/rune/issues/new][issue]].
 
 [fn:5] Why is reference counting slower then garbage collection? There is a lot that goes into it, but it boils down to two main issues:
 1. Every time you copy a ~Rc~ pointer you need to update the reference count. This involves reading the memory, updating the count, and writing it back. Compare that to an "normal" pointer copy where you don't need to even /access/ the memory at all. GC's do have to trace the memory eventually, but this overhead can be moved to a time when it will have less impact (or even moved to another thread). RC overhead needs to happen real time, and happens /every time/.
@@ -1031,7 +1031,7 @@ As with everything in engineering, concurrency comes with trade-offs. Implementi
 
 Anyways, I would love to get some feedback on the ideas presented. Are there obvious holes that I missed? Would this scheme be useful? Do you know way that these could be implemented (or would not be possible to implement)? How does this compare to other dynamic languages? Do you prefer the more "thread-like" or "green-thread-like" approach? Is there a way to address some of the problems presented above?
 **** Have a comment?
-View the discussion on [[https://www.reddit.com/r/emacs/comments/utzxir/a_vision_of_a_multithreaded_emacs/][Reddit]], [[https://news.ycombinator.com/item?id=31559818][Hacker News]], or send me an [[mailto:troy.hinckley@dabrev.com][email]]
+Join the [[https://discu.eu/?q=https%3A%2F%2Fcoredumped.dev%2F2022%2F05%2F19%2Fa-vision-of-a-multi-threaded-emacs%2F&submit_title=A%20vision%20of%20a%20multi-threaded%20Emacs%20%E2%80%A2%20Core%20Dumped][discussion]] or send me an [[mailto:troy.hinckley@dabrev.com][email]]
 
 [fn:1] Similar to what is being attempted for python [[https://github.com/colesbury/nogil][here]] and [[https://github.com/larryhastings/gilectoy][here]].
 
@@ -1289,3 +1289,18 @@ Join the [[https://discu.eu/?q=https%3A%2F%2Fcoredumped.dev%2F2023%2F08%2F09%2Ft
 [fn:2] [[https://github.com/josephg/jumprope-rs/issues/5][github.com/josephg/jumprope-rs/issues/5]]
 
 [fn:3] You may think this unnecessary, and instead you only run the regex one line at a time. If the line is completely contained within a chunk you don't need to allocate anything. And indeed both crop and ropey provide an iterator over the lines of text. But in my testing, this was about an order of magnitude slower than just copying the whole allocation and searching. I am not sure if that mostly comes from the iteration overhead, or if small regex runs are inefficient.
+
+
+* TODO [#B] tagged pointer comparison
+** types
+- alignment bits - mask for tag, mask for data
+- lower byte - tag free, shift data
+- upper byte - tag free, mask data
+- upper bits - shift tag, data free with multiplication in instruction encoding (rust uses this)
+- nan boxing - more expensive, may test it
+** tests
+- single untag
+- multiple untag (ILP)
+- random vs predicatable
+- interleave with ALU ops
+- tag value

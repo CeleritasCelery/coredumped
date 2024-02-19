@@ -210,7 +210,7 @@ I am going to continue work on bootstrapping more elisp files to eventually boot
 
 ### Have a comment? {#have-a-comment}
 
-View the discussion on [Reddit](https://www.reddit.com/r/rust/comments/u21w97/implementing_a_safe_garbage_collector_in_rust/) or [Hacker News](https://news.ycombinator.com/item?id=31166368), send me an [email](mailto:troy.hinckley@dabrev.com), or open an [issue](https://github.com/CeleritasCelery/rune/issues/new).
+Join the [discussion](https://discu.eu/?q=https%3A%2F%2Fcoredumped.dev%2F2022%2F04%2F11%2Fimplementing-a-safe-garbage-collector-in-rust%2F&submit_title=Implementing%20a%20safe%20garbage%20collector%20in%20Rust%20%E2%80%A2%20Core%20Dumped), send me an [email](mailto:troy.hinckley@dabrev.com), or open an [issue](https://github.com/CeleritasCelery/rune/issues/new).
 
 [^fn:1]: Why is reference counting slower then garbage collection? There is a lot that goes into it, but it boils down to two main issues:
 
