@@ -1415,6 +1415,6 @@ This will throw the error "Apparently circular structure being printed". You can
 I think this is a clever solution! It combines the speed and simplicity of Brent's algorithm with the DFS. Since most structures in lisp tend to be "longer" than they are "deep" this is a good trade-off. I decided to write about this because I could not find this particular solution on the Internet and most of the things I did find were very high-level and generic. I like this solution as a combination of engineering and science.
 
 **** Have a comment?
-Join the discussion or send me an [[mailto:troy.hinckley@dabrev.com][email]].
+Join the [[https://discu.eu/?q=https%3A%2F%2Fcoredumped.dev%2F2024%2F02%2F23%2Fcycles-all-way-down%2F&submit_title=Cycles%20all%20way%20down%20%E2%80%A2%20Core%20Dumped][discussion]] or send me an [[mailto:troy.hinckley@dabrev.com][email]].
 
 [fn:1] I was sure there had to be another way so I asked on StackOverflow, where my question was closed as a duplicate of another question that was also closed (got to love StackOverflow!).
