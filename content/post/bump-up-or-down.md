@@ -1,12 +1,12 @@
 +++
 title = "Bump Allocation: Up or Down?"
 author = ["Troy Hinckley"]
-date = 2024-03-22
-tags = ["rust"]
+date = 2024-03-25
+tags = ["rust", "data-structures"]
 draft = false
 +++
 
-Back in 2019, Nick Fitzgerald published [always bump downwards](https://fitzgeraldnick.com/2019/11/01/always-bump-downwards.html), an article making the case that for bump allocators, bumping "down" (towards lower addresses) is better than bumping up. The biggest reasons for this are bumping up requires 3 branches vs 2 for bumping down and rounding down requires fewer instructions than rounding up. This became [the method used](https://github.com/fitzgen/bumpalo/pull/37) for the popular [bumpalo](https://github.com/fitzgen/bumpalo) crate. In this post, I want to go back and revisit that analysis. If you have not read that article, I recommend you do so.
+Back in 2019, Nick Fitzgerald published [always bump downwards](https://fitzgeraldnick.com/2019/11/01/always-bump-downwards.html), an article making the case that for bump allocators, bumping "down" (towards lower addresses) is better than bumping up. The biggest reasons for this are bumping up requires 3 branches vs 2 for bumping down and rounding down requires fewer instructions than rounding up. This became [the method used](https://github.com/fitzgen/bumpalo/pull/37) for the popular [bumpalo](https://github.com/fitzgen/bumpalo) crate. In this post, I want to go back and revisit that analysis. If you have not read that article I recommend you do so, it is very well written.
 
 
 ## Always bump downwards {#always-bump-downwards}
@@ -186,11 +186,11 @@ if (self.end - self.ptr) >= 8 {
 
 {{< figure src="/images/bump/up_aligned.png" >}}
 
-This is a huge improvement for the word-aligned case (u64). Now it is not fair to only apply this optimization to bumping up, so let's add it to bumping down as well.
+This is a huge improvement for the word-aligned case (u64). Now, it is not fair to only apply this optimization to bumping up, so let's add it to bumping down as well.
 
 {{< figure src="/images/bump/up_down_aligned.png" >}}
 
-This also really helped the bump down for word alignment, but not as much as the bump up. When the alignment ≤ minimum alignment, bumping up can be much more efficient. However notice that in the u128 case, it does not help us at all. Thankfully it is very rare for something to need greater than word alignment. And we can see below that if we increase the alignment to 16 the bump up gains the advantage there as well.
+This also really helped the bump down for word alignment, but not as much as the bump up. When the alignment ≤ minimum alignment, bumping up can be much more efficient. However notice that in the u128 case, it does not help us at all. Thankfully, it is rare for something to need greater than word alignment. And we can see below that if we increase the alignment to 16 the bump up gains the advantage there as well.
 
 {{< figure src="/images/bump/up_down_aligned_16.png" >}}
 
@@ -233,7 +233,7 @@ Since bumping up tends to be simpler than bumping down, it gives more freedom to
 
 ## Should you bump up or down? {#should-you-bump-up-or-down}
 
-It is really hard to benchmark allocation in a vacuum because so much of the performance depends on what is being allocated and how much the optimizer can [reason about it](https://docs.rs/bumpalo/latest/bumpalo/struct.Bump.html#initializer-functions-the-_with-method-suffix). For any sufficiently large allocation, the cost of initializing the memory will dwarf the allocator overhead. As we can see in the benchmarks above, bump up is much more sensitive to alignment than bump down is (despite everything we tried, it is still cheaper to round down than round up). However, if you go with word alignment bumping up will be optimal the majority of the time (and you get the realloc fast path).
+It is really hard to benchmark allocation in a vacuum because so much of the performance depends on what is being allocated and how much the optimizer can [reason about it](https://docs.rs/bumpalo/latest/bumpalo/struct.Bump.html#initializer-functions-the-_with-method-suffix).  But I think it is fair to say that bump-down does not have some absolute advantage in allocation. As with everything in engineering, it is all about trade-offs. All though picking a good minimum alignment benefits both allocators, bump-up is more sensitive to it than bump-down is. Bump-up also lets you keep the realloc fast path. If you use word alignment, bumping up will be the optimal strategy the majority of the time.
 
 You can find the benchmarks used in this article [here](https://github.com/CeleritasCelery/benchmark_bump_up_down).
 
