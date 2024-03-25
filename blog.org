@@ -1435,7 +1435,7 @@ First, let's start with the code from the original article. I have modified the 
           &mut self,
           size: usize,
           align: usize,
-      ) -> NonNull<u8> {
+      ) -> Option<NonNull<u8>> {
           let ptr = self.ptr as usize;
 
           let new_ptr = ptr.checked_sub(size)?;

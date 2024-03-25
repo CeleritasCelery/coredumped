@@ -22,7 +22,7 @@ impl BumpDown {
         &mut self,
         size: usize,
         align: usize,
-    ) -> NonNull<u8> {
+    ) -> Option<NonNull<u8>> {
         let ptr = self.ptr as usize;
 
         let new_ptr = ptr.checked_sub(size)?;
