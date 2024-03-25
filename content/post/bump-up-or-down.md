@@ -23,9 +23,6 @@ impl BumpDown {
         size: usize,
         align: usize,
     ) -> NonNull<u8> {
-        debug_assert!(align > 0);
-        debug_assert!(align.is_power_of_two());
-
         let ptr = self.ptr as usize;
 
         let new_ptr = ptr.checked_sub(size)?;
@@ -55,13 +52,9 @@ impl BumpUp {
         size: usize,
         align: usize,
     ) -> Option<NonNull<u8>> {
-        debug_assert!(align > 0);
-        debug_assert!(align.is_power_of_two());
-
         let ptr = self.ptr as usize;
 
-        // Round the bump pointer up to the requested
-        // alignment.
+        // Round up to the requested alignment.
         let aligned = (ptr.checked_add(align - 1))? & !(align - 1);
         let new_ptr = aligned.checked_add(size)?;
 
