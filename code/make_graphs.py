@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.11
 import numpy as np
 from warnings import simplefilter
 import matplotlib.pyplot as plt
@@ -378,6 +378,7 @@ def report_search_full():
     crop =     [0, 72.753e3, 31.477e6, 68.626e6, 114.99e6, 132.51e6, 134.82e6, 164.66e6, 232.65e6, 253.14e6]
     jumprope = [0, 138.55e3, 41.465e6, 81.055e6, 110.87e6, 120.40e6, 156.95e6, 166.65e6, 206.09e6, 254.81e6]
     ropey =    [0, 86.966e3, 42.887e6, 66.483e6, 100.26e6, 118.14e6, 148.11e6, 186.52e6, 225.03e6, 241.91e6]
+    ropey_cr = [0, 57.797e3, 8.2573e6, 19.770e6, 26.572e6, 34.645e6, 40.882e6, 48.543e6, 56.437e6, 65.348e6]
     move_gap = [0, 8.2886e3, 1.3293e6, 2.6857e6, 4.0778e6, 5.4573e6, 7.0241e6, 8.7642e6, 10.221e6, 11.841e6]
     distance = [0, 1048576, 134217728, 268435456, 402653184, 536870912, 671088640, 805306368, 939524096, 1073741824]
 
@@ -387,6 +388,7 @@ def report_search_full():
     plt.plot(distance, crop, label='crop')
     plt.plot(distance, jumprope, label='jumprope')
     plt.plot(distance, ropey, label='ropey')
+    plt.plot(distance, ropey_cr, label='ropey-cursor')
 
 
     plt.gca().yaxis.set_major_formatter(formatter_y)
@@ -407,6 +409,7 @@ def report_search_full():
     plt.plot(distance, crop, label='crop')
     plt.plot(distance, jumprope, label='jumprope')
     plt.plot(distance, ropey, label='ropey')
+    plt.plot(distance, ropey_cr, label='ropey-cursor')
     # add move_gap to buffer and plot the result
     buffer = np.array(buffer) + np.array(move_gap)
     plt.plot(distance, buffer, label='buffer + move gap')
@@ -419,7 +422,7 @@ def report_search_full():
 
 
 
-report_overhead()
+# report_overhead()
 # report_edit_overhead()
 # report_move_gap()
 # report_resize()
