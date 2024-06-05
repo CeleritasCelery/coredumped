@@ -1288,7 +1288,7 @@ Despite all that, gap buffers showed they can do quite well when placed against 
 **** Have a comment?
 Join the [[https://discu.eu/?q=https%3A%2F%2Fcoredumped.dev%2F2023%2F08%2F09%2Ftext-showdown-gap-buffers-vs-ropes%2F&submit_title=Text%20showdown%3A%20Gap%20Buffers%20vs%20Ropes%20%E2%80%A2%20Core%20Dumped][discussion]] or send me an [[mailto:troy.hinckley@dabrev.com][email]]. Benchmarks can be found [[https://github.com/CeleritasCelery/rope-benches][here]].
 
-[fn:1] GB here means 2^30, as it should when [[https://www.merriam-webster.com/dictionary/kilobyte][talking about base-2 memory]]. The only people who think it should be 10^9 are hard drive salesmen and the type of people who like to correct all their friends by saying "It's centripetal, not centrifugal force!". Also "gibibyte" sounds like Pokémon invented by a first grader.
+[fn:1] GB here means 2^30, as it should when [[https://www.merriam-webster.com/dictionary/kilobyte][talking about base-2 memory]]. The only people who think it should be 10^9 are hard drive salesmen and the type of people who [[https://www.theguardian.com/commentisfree/2015/feb/05/why-wikipedias-grammar-vigilante-is-wrong][spend years pointlessly changing peoples grammar on wikipedia]]. Also "gibibyte" sounds like Pokémon invented by a first grader.
 
 [fn:2] [[https://github.com/josephg/jumprope-rs/issues/5][github.com/josephg/jumprope-rs/issues/5]]
 
