@@ -184,6 +184,6 @@ Either way, this was a fun exploration into how compilers and ISA can have an im
 
 Benchmarks can be found [here](https://github.com/CeleritasCelery/pointer_tagging_benchmarks).
 
-Join the discussion or send me an [email](mailto:troy@troyhinckley.com).
+Join the [discussion](https://discu.eu/?q=https%3A%2F%2Fcoredumped.dev%2F2024%2F09%2F09%2Fwhat-is-the-best-pointer-tagging-method%2F&submit_title=What%20is%20the%20best%20pointer%20tagging%20method%3F%20%E2%80%A2%20Core%20Dumped) or send me an [email](mailto:troy@troyhinckley.com).
 
 [^fn:1]: I say unused, but not necessarily zero. On Linux in particular the top bytes are 1 if the pointer is in kernel space.
