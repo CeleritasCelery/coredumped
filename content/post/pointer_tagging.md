@@ -28,7 +28,7 @@ Upper bits
 Nan Boxing
 : Generally used only in languages where floating points are the primary number (such as Javascript and Lua). This scheme takes advantage of the fact the IEEE floating point number has a bunch of unused values to represent NaN (Not a Number) and these [can be used to encode pointers](https://craftinginterpreters.com/optimization.html#nan-boxing). This allows us to embed floats directly into the tagged value without having to dereference a pointer.
 
-We also will be testing an "untagged" value as a baseline. This will use two words, one for the tag and one for the pointer. This is what you get with Rust [enums](https://doc.rust-lang.org/book/ch06-01-defining-an-enum.html) or Zig [tagged unions](https://ziglang.org/documentation/0.6.0/#Tagged-union). Since this version does not need to do any pointer manipulation for untagging, we expect it to be faster than the tagged pointers.
+We will be testing against a fat pointer for the baseline. This will use two words, one for the tag and one for the pointer. This is what you get with Rust [enums](https://doc.rust-lang.org/book/ch06-01-defining-an-enum.html) or Zig [tagged unions](https://ziglang.org/documentation/0.6.0/#Tagged-union). Since this version does not need to do any pointer manipulation for untagging, we expect it to be faster than the tagged pointers.
 
 | type       | create                     | get tag                                   | get data                    | total tags |
 |------------|----------------------------|-------------------------------------------|-----------------------------|------------|
