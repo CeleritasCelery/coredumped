@@ -30,13 +30,13 @@ Nan Boxing
 
 We will be testing against a fat pointer for the baseline. This will use two words, one for the tag and one for the pointer. This is what you get with Rust [enums](https://doc.rust-lang.org/book/ch06-01-defining-an-enum.html) or Zig [tagged unions](https://ziglang.org/documentation/0.6.0/#Tagged-union). Since this version does not need to do any pointer manipulation for untagging, we expect it to be faster than the tagged pointers.
 
-| type       | create                     | get tag                                   | get data                    | total tags |
-|------------|----------------------------|-------------------------------------------|-----------------------------|------------|
-| lower bits | ptr &vert; tag             | ptr &amp; 0x7                             | ptr &amp; !0x7              | 8          |
-| lower byte | ptr &lt;&lt; 8 &vert; tag  | ptr as u8                                 | ptr &gt;&gt; 8              | 256        |
-| upper bits | ptr &vert; tag &lt;&lt; 61 | ptr &gt;&gt; 61                           | ptr &lt;&lt; 3              | 8          |
-| upper byte | ptr &vert; tag &lt;&lt; 56 | ptr &gt;&gt; 56                           | ptr &gt;&gt; 8              | 256        |
-| nan boxing | ptr &vert; nan &vert; tag  | if nan == (ptr &amp; nan) {ptr &amp; 0x7} | ptr &amp; !(nan &vert; 0x7) | 8          |
+| type       | create                     | get tag                                   | get data                      | total tags |
+|------------|----------------------------|-------------------------------------------|-------------------------------|------------|
+| lower bits | ptr &vert; tag             | ptr &amp; 0x7                             | ptr &amp; !0x7                | 8          |
+| lower byte | ptr &lt;&lt; 8 &vert; tag  | ptr as u8                                 | ptr &gt;&gt; 8                | 256        |
+| upper bits | ptr &vert; tag &lt;&lt; 61 | ptr &gt;&gt; 61                           | ptr &lt;&lt; 3                | 8          |
+| upper byte | ptr &vert; tag &lt;&lt; 56 | ptr &gt;&gt; 56                           | ptr &amp; !(0xFF &lt;&lt; 56) | 256        |
+| nan boxing | ptr &vert; nan &vert; tag  | if nan == (ptr &amp; nan) {ptr &amp; 0x7} | ptr &amp; !(nan &vert; 0x7)   | 8          |
 
 In theory, these should all be roughly the same, as they each use one operation to get the tag and another to get the data. But as we will see below, that is not always the case and even depends on the instruction set used.
 

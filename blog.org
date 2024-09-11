@@ -1635,7 +1635,7 @@ We will be testing against a fat pointer for the baseline. This will use two wor
 | lower bits | ptr \vert tag           | ptr & 0x7                         | ptr & !0x7             |          8 |
 | lower byte | ptr << 8 \vert tag      | ptr as u8                         | ptr >> 8               |        256 |
 | upper bits | ptr \vert tag << 61     | ptr >> 61                         | ptr << 3               |          8 |
-| upper byte | ptr \vert tag << 56     | ptr >> 56                         | ptr >> 8               |        256 |
+| upper byte | ptr \vert tag << 56     | ptr >> 56                         | ptr & !(0xFF << 56)    |        256 |
 | nan boxing | ptr \vert nan \vert tag | if nan == (ptr & nan) {ptr & 0x7} | ptr & !(nan \vert 0x7) |          8 |
 
 In theory, these should all be roughly the same, as they each use one operation to get the tag and another to get the data. But as we will see below, that is not always the case and even depends on the instruction set used.
