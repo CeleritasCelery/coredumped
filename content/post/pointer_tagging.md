@@ -96,7 +96,7 @@ Rather than masking with `and` we could instead turn this into a subtract (e.g. 
 mov     eax, DWORD PTR [rdi + 3]
 ```
 
-Interestingly, clang/LLVM [will not do this optimization](https://godbolt.org/z/79f89oxex), even if you explicitly use subtraction in the code (it will always convert it back to an `and`). However, GCC will happily [do this optimziation](https://godbolt.org/z/bT3Tbnq67). This makes the GCC version of the sum benchmark about 20% faster than the LLVM version in the cases where this is applicable. My best guess is that there is some peephole optimization in LLVM that is doing a "strength reduction" to convert some subtractions to `and`'s, which is ruining its ability to merge it into the load. Compilers are complicated.
+Interestingly, clang/LLVM [will not do this optimization](https://godbolt.org/z/79f89oxex), even if you explicitly use subtraction in the code (it will always convert it back to an `and`). However, GCC will happily [do this optimziation](https://godbolt.org/z/bT3Tbnq67). This makes the GCC version of the sum benchmark about 20% faster than the LLVM version in the cases where this is applicable. My best guess is that there is some peephole optimization in LLVM that is doing a "strength reduction" to convert some subtractions to `and`'s, which is ruining its ability to merge it into the load. Compilers are complicated&nbsp;[^fn:2].
 
 
 ### x86 {#x86}
@@ -187,3 +187,4 @@ Benchmarks can be found [here](https://github.com/CeleritasCelery/pointer_taggin
 Join the [discussion](https://discu.eu/?q=https%3A%2F%2Fcoredumped.dev%2F2024%2F09%2F09%2Fwhat-is-the-best-pointer-tagging-method%2F&submit_title=What%20is%20the%20best%20pointer%20tagging%20method%3F%20%E2%80%A2%20Core%20Dumped) or send me an [email](mailto:troy@troyhinckley.com).
 
 [^fn:1]: I say unused, but not necessarily zero. On Linux in particular the top bytes are 1 if the pointer is in kernel space.
+[^fn:2]: An LLVM contributor pointed me to [this](https://godbolt.org/z/TKoq4WKve) modified version of the code where LLVM will do the optimization we want. The key change is subtracting 1 instead of `tag`. Even though we "know" that the tag is 1 inside the `if` statement, compilers sometimes struggle with control flow-dependent facts.
