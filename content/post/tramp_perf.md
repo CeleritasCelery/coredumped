@@ -5,7 +5,7 @@ date = 2025-06-18
 draft = false
 +++
 
-I recently changed jobs and found myself in a position where I would need to do a lot of work on remote machines. Since I am Emacs user, the most common way to do this is over [TRAMP](https://www.gnu.org/software/tramp/). TRAMP is an Emacs package that let's you treat a remote host like a local system, similar to [VSCode Remote Development Extension](https://code.visualstudio.com/docs/remote/remote-overview). I had used TRAMP before and it tended to be slow. Since I would be using it all day now I figured I should take some time to make it faster.
+I recently changed jobs and found myself in a position where I would need to do a lot of work on remote machines. Since I am Emacs user, the most common way to do this is using [TRAMP (Transparent Remote access, Multiple Protcol)](https://www.gnu.org/software/tramp/). TRAMP is an Emacs package that let's you treat a remote host like a local system, similar to [VSCode Remote Development Extension](https://code.visualstudio.com/docs/remote/remote-overview). I had used TRAMP before and it tended to be slow. Since I would be using it all day now I figured I should take some time to make it faster.
 
 
 ## TRAMP is great {#tramp-is-great}
@@ -73,7 +73,7 @@ Newer versions of TRAMP will use [SSH connection sharing](https://www.gnu.org/so
 
 What can we do to make working over TRAMP faster? If you are like me and already have an existing config, it is more than likely that some packages you are using are not going to play nicely over TRAMP due to the extra overhead. There will be certain operations like changing modes, moving the cursor, or saving a buffer that has inexplicable delays.
 
-When you encounter this, you should use the profiler. use `M-x profiler-start` before  behavior that is slow and then `M-x profiler-stop` and `M-x profiler-report` afterwards. This will give you a hierarchical list of where Emacs was spending its time. If this is an issue related to TRAMP you should see `tramp-wait-for-output` be a significant portion of the total time. But it is not always clear what is actually causing TRAMP to be called. In this case, you can use `debug-on-entry`  on `TRAMP_send-command` to get a backtrace when something calls TRAMP. This will let you see the exact commands that are calling out to TRAMP and causing the slow down. In my case, I found a couple of the features of doom modeline were causing a lot of delays.
+When you encounter this, you should use the built-in profiler. use `M-x profiler-start` before  behavior that is slow and then `M-x profiler-stop` and `M-x profiler-report` afterwards. This will give you a hierarchical list of where Emacs was spending its time. If this is an issue related to TRAMP you should see `tramp-wait-for-output` be a significant portion of the total time. But it is not always clear what is actually causing TRAMP to be called. In this case, you can use `debug-on-entry`  on `tramp-send-command` to get a backtrace when something calls TRAMP. This will let you see the exact commands that are calling out to TRAMP and causing the slow down. In my case, I found a couple of the features of doom modeline were causing a lot of delays.
 
 ```emacs-lisp
 (remove-hook 'evil-insert-state-exit-hook #'doom-modeline-update-buffer-file-name)
