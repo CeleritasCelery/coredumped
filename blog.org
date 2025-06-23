@@ -1794,7 +1794,7 @@ You can see in the graph above that inline is faster all the way up until about 
 
 I also found that using ~rsync~ as your method makes updating an existing file (i.e. making a small change to a file and saving it) about 3-4 times faster than using ~scp~.  I don't use ~rsync~ though because it breaks remote shells.
 *** Use Direct Async
-When creating a new process in Emacs, you have two options: synchronous or asynchronous. Async processes have historically been really slow over TRAMP, because it has to create a new connection for every async process. However recent version of TRAMP have added a feature called [[https://www.gnu.org/software/TRAMP/#Improving-performance-of-asynchronous-remote-processes-1][direct async process]] that makes this significantly faster. This feature alone will take many packages (like magit or git-gutter) from completely unusable to bearable over TRAMP. Here is how you configure it with TRAMP ~2.7~.
+When creating a new process in Emacs, you have two options: synchronous or asynchronous. Async processes have historically been really slow over TRAMP, because it has to create a new connection for every async process. However recent version of TRAMP have added a feature called [[https://www.gnu.org/software/tramp/#Improving-performance-of-asynchronous-remote-processes-1][direct async process]] that makes this significantly faster. This feature alone will take many packages (like magit or git-gutter) from completely unusable to bearable over TRAMP. Here is how you configure it with TRAMP ~2.7~.
 #+begin_src emacs-lisp
   (connection-local-set-profile-variables
    'remote-direct-async-process
@@ -1810,7 +1810,7 @@ When creating a new process in Emacs, you have two options: synchronous or async
 We have to add that extra setting to get magit to work. See [[https://github.com/magit/magit/issues/5220][this issue]] for more details. You can double check that this mode is working by calling ~M-: (tramp-direct-async-process-p)~ on a remote file. make sure to change ~"server"~ to the name of your remote.
 
 *** Fix remote compile
-Newer versions of TRAMP will use [[https://www.gnu.org/software/TRAMP/#Using-ssh-connection-sharing-1][SSH connection sharing]] for much faster connections. These don't require you to reenter your password each time you connect. The ~compile~ command disables this feature, so we want to turn it back on.
+Newer versions of TRAMP will use [[https://www.gnu.org/software/tramp/#Using-ssh-connection-sharing-1][SSH connection sharing]] for much faster connections. These don't require you to reenter your password each time you connect. The ~compile~ command disables this feature, so we want to turn it back on.
 #+begin_src emacs-lisp
 (with-eval-after-load 'tramp
   (with-eval-after-load 'compile
