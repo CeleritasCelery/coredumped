@@ -5,12 +5,12 @@ date = 2025-06-18
 draft = false
 +++
 
-I recently changed jobs and found myself in a position where I would need to do a lot of work over TRAMP. I had used TRAMP before and it tended to be slow. Since I would be using it all day now I figured I should take some time to make it faster.
+I recently changed jobs and found myself in a position where I would need to do a lot of work on remote machines. Since I am Emacs user, the most common way to do this is over [TRAMP](https://www.gnu.org/software/tramp/). TRAMP is an Emacs package that let's you treat a remote host like a local system, similar to [VSCode Remote Development Extension](https://code.visualstudio.com/docs/remote/remote-overview). I had used TRAMP before and it tended to be slow. Since I would be using it all day now I figured I should take some time to make it faster.
 
 
 ## TRAMP is great {#tramp-is-great}
 
-TRAMP really is an amazing piece of technology. It supports a huge number of protocols and for the most part, it lets you pretend that you are working with on a local system. You can copy files around, run programs, run shells, and for the most part everything just works.
+TRAMP really is an amazing piece of technology. It supports a huge number of protocols and it lets you pretend that you are working on a local system. You can copy files around, run programs, run shells, and for the most part everything just works.
 
 But TRAMP unfortunately has a propensity for being slow. Sometimes this is not TRAMPs fault and comes from how it is used. In my testing, each call through TRAMP takes about 50-100ms. Compare that to a normal external process call in Emacs which would take around 1 ms. Workflows that work fine on a local machine become unbearable when working remotely. However, this doesn't mean that TRAMP has to be slow. If you run `emacs -Q` and use TRAMP you will normally find it quite snappy.
 
@@ -60,7 +60,7 @@ We have to add that extra setting to get magit to work. See [this issue](https:/
 
 ## Fix remote compile {#fix-remote-compile}
 
-Newer versions of TRAMP will use [SSH connection sharing](https://www.gnu.org/software/TRAMP/#Using-ssh-connection-sharing-1) for much faster connections, that don't require you to enter your password each time you connect. The `compile` command disables this feature, so we want to turn it back on.
+Newer versions of TRAMP will use [SSH connection sharing](https://www.gnu.org/software/TRAMP/#Using-ssh-connection-sharing-1) for much faster connections. These don't require you to reenter your password each time you connect. The `compile` command disables this feature, so we want to turn it back on.
 
 ```emacs-lisp
 (with-eval-after-load 'tramp
@@ -71,7 +71,7 @@ Newer versions of TRAMP will use [SSH connection sharing](https://www.gnu.org/so
 
 ## How to debug perf issues {#how-to-debug-perf-issues}
 
-So what can we do to make working over TRAMP faster? If you are like me and already have an existing config, it is more than likely that some packages you are using are not going to play nicely over TRAMP due to the extra overhead. There will be certain operations like changing modes, moving the cursor, or saving a buffer that has inexplicable delays.
+What can we do to make working over TRAMP faster? If you are like me and already have an existing config, it is more than likely that some packages you are using are not going to play nicely over TRAMP due to the extra overhead. There will be certain operations like changing modes, moving the cursor, or saving a buffer that has inexplicable delays.
 
 When you encounter this, you should use the profiler. use `M-x profiler-start` before  behavior that is slow and then `M-x profiler-stop` and `M-x profiler-report` afterwards. This will give you a hierarchical list of where Emacs was spending its time. If this is an issue related to TRAMP you should see `tramp-wait-for-output` be a significant portion of the total time. But it is not always clear what is actually causing TRAMP to be called. In this case, you can use `debug-on-entry`  on `TRAMP_send-command` to get a backtrace when something calls TRAMP. This will let you see the exact commands that are calling out to TRAMP and causing the slow down. In my case, I found a couple of the features of doom modeline were causing a lot of delays.
 
