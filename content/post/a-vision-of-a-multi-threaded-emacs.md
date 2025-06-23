@@ -175,7 +175,7 @@ Anyways, I would love to get some feedback on the ideas presented. Are there obv
 
 ### Have a comment? {#have-a-comment}
 
-Join the [discussion](https://discu.eu/?q=https%3A%2F%2Fcoredumped.dev%2F2022%2F05%2F19%2Fa-vision-of-a-multi-threaded-emacs%2F&submit_title=A%20vision%20of%20a%20multi-threaded%20Emacs%20%E2%80%A2%20Core%20Dumped) or send me an [email](mailto:troy.hinckley@dabrev.com)
+Join the discussion on [HN](https://hn.algolia.com/?dateRange=all&page=0&prefix=false&query=https%3A%2F%2Fcoredumped.dev%2F2022%2F05%2F19%2Fa-vision-of-a-multi-threaded-emacs%2F&sort=byPopularity&type=story), [Lobsters](https://lobste.rs/search?q=https%3A%2F%2Fcoredumped.dev%2F2022%2F05%2F19%2Fa-vision-of-a-multi-threaded-emacs%2F&what=stories&order=newest), [Reddit](https://www.reddit.com/search/?q=url%3Acoredumped.dev%2F2022%2F05%2F19%2Fa-vision-of-a-multi-threaded-emacs%2F&sort=top), or send me an [email](mailto:troy.hinckley@dabrev.com)
 
 [^fn:1]: And you can't share anything that doesn't have a clear [readable](https://www.gnu.org/software/emacs/manual/html_node/elisp/Streams-Intro.html) representation such as windows, frames, or makers.
 [^fn:2]: Similar to what is being attempted for python [here](https://github.com/colesbury/nogil) and [here](https://github.com/larryhastings/gilectoy).

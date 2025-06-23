@@ -191,3 +191,8 @@ I can then use it to cache things I don't want TRAMP to be looking up all the ti
 ## Future work {#future-work}
 
 All this work has made TRAMP quite usable for me. There are still things that are slow, but almost nothing that just doesn't work. For most of the work I do I hardly notice that I am working over a remote protocol. However, in writing all this, I kept thinking to myself "There has to be a better way to do this". I have started to think of ways to fundamentally improve the performance of TRAMP that would involve changes to the package itself. I plan to write more on that soon, so stay tuned!
+
+
+### Have a comment? {#have-a-comment}
+
+Join the discussion on [HN](https://hn.algolia.com/?dateRange=all&page=0&prefix=false&query=https%3A%2F%2Fcoredumped.dev%2F2025%2F06%2F18%2Fmaking-tramp-go-brrrr.%2F&sort=byPopularity&type=story), [Lobsters](https://lobste.rs/search?q=https%3A%2F%2Fcoredumped.dev%2F2025%2F06%2F18%2Fmaking-tramp-go-brrrr.%2F&what=stories&order=newest), [Reddit](https://www.reddit.com/search/?q=url%3Acoredumped.dev%2F2025%2F06%2F18%2Fmaking-tramp-go-brrrr.%2F&sort=top), or send me an [email](mailto:troy@troyhinckley.com).

@@ -115,7 +115,7 @@ This project is still far from complete or useful. It's truly a love letter to E
 
 ### Have a comment? {#have-a-comment}
 
-Join the [discussion](https://discu.eu/?q=https%3A%2F%2Fcoredumped.dev%2F2023%2F01%2F17%2Fdesign-of-emacs-in-rust%2F%23fnref%3A3&submit_title=Design%20of%20Emacs%20in%20Rust%20%E2%80%A2%20Core%20Dumped) or send me an [email](mailto:troy.hinckley@dabrev.com)
+Join the discussion on [HN](https://hn.algolia.com/?dateRange=all&page=0&prefix=false&query=https%3A%2F%2Fcoredumped.dev%2F2023%2F01%2F17%2Fdesign-of-emacs-in-rust%2F&sort=byPopularity&type=story), [Lobsters](https://lobste.rs/search?q=https%3A%2F%2Fcoredumped.dev%2F2023%2F01%2F17%2Fdesign-of-emacs-in-rust%2F&what=stories&order=newest), [Reddit](https://www.reddit.com/search/?q=url%3Acoredumped.dev%2F2023%2F01%2F17%2Fdesign-of-emacs-in-rust%2F&sort=top), or send me an [email](mailto:troy.hinckley@dabrev.com)
 
 [^fn:1]: This would not have been possible without Rocky Bernstein's amazing resource; [Bytecode Reference Manual](http://rocky.github.io/elisp-bytecode.pdf).
 [^fn:2]: Most of the boostrap issues were functions being called before their macros were defined. Or it would be variables that were not defined before functions were evaluated. This is fine for an interpreter because the macros and variables would be code paths that were not used, so the macro was never evaluated. But a bytecompiler will expand all macros in a function, so it would generate a function call instead of a macro expansion.

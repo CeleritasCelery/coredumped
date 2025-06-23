@@ -169,7 +169,7 @@ Despite all that, gap buffers showed they can do quite well when placed against 
 
 ### Have a comment? {#have-a-comment}
 
-Join the [discussion](https://discu.eu/?q=https%3A%2F%2Fcoredumped.dev%2F2023%2F08%2F09%2Ftext-showdown-gap-buffers-vs-ropes%2F&submit_title=Text%20showdown%3A%20Gap%20Buffers%20vs%20Ropes%20%E2%80%A2%20Core%20Dumped) or send me an [email](mailto:troy.hinckley@dabrev.com). Benchmarks can be found [here](https://github.com/CeleritasCelery/rope-benches).
+Join the discussion on [HN](https://hn.algolia.com/?dateRange=all&page=0&prefix=false&query=https%3A%2F%2Fcoredumped.dev%2F2023%2F08%2F09%2Ftext-showdown-gap-buffers-vs-ropes%2F&sort=byPopularity&type=story), [Lobsters](https://lobste.rs/search?q=https%3A%2F%2Fcoredumped.dev%2F2023%2F08%2F09%2Ftext-showdown-gap-buffers-vs-ropes%2F&what=stories&order=newest), [Reddit](https://www.reddit.com/search/?q=url%3Acoredumped.dev%2F2023%2F08%2F09%2Ftext-showdown-gap-buffers-vs-ropes%2F&sort=top), or send me an [email](mailto:troy.hinckley@dabrev.com). Benchmarks can be found [here](https://github.com/CeleritasCelery/rope-benches).
 
 [^fn:1]: GB here means 2^30, as it should when [talking about base-2 memory](https://www.merriam-webster.com/dictionary/kilobyte). The only people who think it should be 10^9 are hard drive salesmen and the type of people who [spend years pointlessly changing peoples grammar on wikipedia](https://www.theguardian.com/commentisfree/2015/feb/05/why-wikipedias-grammar-vigilante-is-wrong). Also "gibibyte" sounds like Pokémon invented by a first grader.
 [^fn:2]: [github.com/josephg/jumprope-rs/issues/5](https://github.com/josephg/jumprope-rs/issues/5)

@@ -99,6 +99,6 @@ When I first saw this behavior, I thought for sure that I found a bug in the lan
 
 ### Have a comment? {#have-a-comment}
 
-Join the [discussion](https://discu.eu/?q=https%3A%2F%2Fcoredumped.dev%2F2021%2F04%2F07%2Fwhen-pure-function-lie%2F&submit_title=When%20pure%20function%20lie%20%E2%80%A2%20Core%20Dumped) or send me an [email](mailto:troy.hinckley@dabrev.com)
+Join the discussion on [HN](https://hn.algolia.com/?dateRange=all&page=0&prefix=false&query=https%3A%2F%2Fcoredumped.dev%2F2021%2F04%2F07%2Fwhen-pure-function-lie%2F&sort=byPopularity&type=story), [Lobsters](https://lobste.rs/search?q=https%3A%2F%2Fcoredumped.dev%2F2021%2F04%2F07%2Fwhen-pure-function-lie%2F&what=stories&order=newest), [Reddit](https://www.reddit.com/search/?q=url%3Acoredumped.dev%2F2021%2F04%2F07%2Fwhen-pure-function-lie%2F&sort=top), or send me an [email](mailto:troy.hinckley@dabrev.com)
 
 [^fn:1]: As several people [pointed out](https://www.reddit.com/r/emacs/comments/mm70re/when_pure_functions_lie/gtq1oir?utm_source=share&utm_medium=web2x&context=3), the reason this works in python is because it is making a copy of the list every time it returns. You could introduce the same issue in python using default arguments, which are not copied. To protect against this in lisp, you can use `(vector 1 2 3)` instead of `'(1 2 3)` and it will make a copy of the vector.

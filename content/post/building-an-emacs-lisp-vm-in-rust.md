@@ -159,7 +159,7 @@ As for how long I plan to continue this project, I don't really know. At very le
 
 ### Have a comment? {#have-a-comment}
 
-Join the [discussion](https://discu.eu/?q=https%3A%2F%2Fcoredumped.dev%2F2021%2F10%2F21%2Fbuilding-an-emacs-lisp-vm-in-rust%2F), or send me an [email](mailto:troy.hinckley@dabrev.com)
+Join the discussion on [HN](https://hn.algolia.com/?dateRange=all&page=0&prefix=false&query=https%3A%2F%2Fcoredumped.dev%2F2021%2F10%2F21%2Fbuilding-an-emacs-lisp-vm-in-rust%2F&sort=byPopularity&type=story), [Lobsters](https://lobste.rs/search?q=https%3A%2F%2Fcoredumped.dev%2F2021%2F10%2F21%2Fbuilding-an-emacs-lisp-vm-in-rust%2F&what=stories&order=newest), [Reddit](https://www.reddit.com/search/?q=url%3Acoredumped.dev%2F2021%2F10%2F21%2Fbuilding-an-emacs-lisp-vm-in-rust%2F&sort=top), or send me an [email](mailto:troy.hinckley@dabrev.com)
 
 [^fn:1]: As an added bonus converting between objects can be a no-op with the [arbitrary_enum_discriminant](https://github.com/rust-lang/rust/issues/60553) feature that was [released with Rust 1.66](https://blog.rust-lang.org/2022/12/15/Rust-1.66.0.html#explicit-discriminants-on-enums-with-fields).
 [^fn:2]: This [issue](https://github.com/rust-lang/rust/issues/50133) shows how a seemingly innocent blanket implementation in the core can break a bunch of generics for all users due to no specialization.

@@ -406,7 +406,7 @@ This is another reason that it is hard to make a true multi-threaded elisp. You 
 
 When I first saw this behavior, I thought for sure that I found a bug in the language implementation. This couldn't possibly be intentional. But after investigating more, I found that this was expected... at least if you are lisp programmer.
 ****  Have a comment?
-Join the [[https://discu.eu/?q=https%3A%2F%2Fcoredumped.dev%2F2021%2F04%2F07%2Fwhen-pure-function-lie%2F&submit_title=When%20pure%20function%20lie%20%E2%80%A2%20Core%20Dumped][discussion]] or send me an [[mailto:troy.hinckley@dabrev.com][email]]
+Join the discussion on [[https://hn.algolia.com/?dateRange=all&page=0&prefix=false&query=https%3A%2F%2Fcoredumped.dev%2F2021%2F04%2F07%2Fwhen-pure-function-lie%2F&sort=byPopularity&type=story][HN]], [[https://lobste.rs/search?q=https%3A%2F%2Fcoredumped.dev%2F2021%2F04%2F07%2Fwhen-pure-function-lie%2F&what=stories&order=newest][Lobsters]], [[https://www.reddit.com/search/?q=url%3Acoredumped.dev%2F2021%2F04%2F07%2Fwhen-pure-function-lie%2F&sort=top][Reddit]], or send me an [[mailto:troy.hinckley@dabrev.com][email]]
 
 [fn:1] As several people [[https://www.reddit.com/r/emacs/comments/mm70re/when_pure_functions_lie/gtq1oir?utm_source=share&utm_medium=web2x&context=3][pointed out]], the reason this works in python is because it is making a copy of the list every time it returns. You could introduce the same issue in python using default arguments, which are not copied. To protect against this in lisp, you can use ~(vector 1 2 3)~ instead of ~'(1 2 3)~ and it will make a copy of the vector.
 
@@ -533,7 +533,7 @@ I really gained an appreciation for the depth of the Emacs internals. That code 
 As for how long I plan to continue this project, I don't really know. At very least I am going to bootstrap the Emacs lisp compiler to test it against my runtime and implement a garbage collector. My expectation is either that I will learn enough about text-editors and interpreters to be able to contribute to Emacs proper, or I will find a problem in the Rust ecosystem that does not have a good solution and focus on that instead. Or I may continue to see how far I can push this project. Either way, contributions and testing are welcome. Please take a look at the [[https://github.com/CeleritasCelery/rune][code]] and give feedback. I am particularly interested in anything that could be unsound or lead to undefined behavior. This has been a great experience and I am learning more than I could have hoped.
 
 **** Have a comment?
-Join the [[https://discu.eu/?q=https%3A%2F%2Fcoredumped.dev%2F2021%2F10%2F21%2Fbuilding-an-emacs-lisp-vm-in-rust%2F][discussion]], or send me an [[mailto:troy.hinckley@dabrev.com][email]]
+Join the discussion on [[https://hn.algolia.com/?dateRange=all&page=0&prefix=false&query=https%3A%2F%2Fcoredumped.dev%2F2021%2F10%2F21%2Fbuilding-an-emacs-lisp-vm-in-rust%2F&sort=byPopularity&type=story][HN]], [[https://lobste.rs/search?q=https%3A%2F%2Fcoredumped.dev%2F2021%2F10%2F21%2Fbuilding-an-emacs-lisp-vm-in-rust%2F&what=stories&order=newest][Lobsters]], [[https://www.reddit.com/search/?q=url%3Acoredumped.dev%2F2021%2F10%2F21%2Fbuilding-an-emacs-lisp-vm-in-rust%2F&sort=top][Reddit]], or send me an [[mailto:troy.hinckley@dabrev.com][email]]
 
 [fn:1] LLVM has support for this, but is has not been moved into Rust yet.
 
@@ -872,7 +872,7 @@ Overall, I am pretty happy with how it turned out. That being said, there is *a 
 I am going to continue work on bootstrapping more elisp files to eventually bootstrap the elisp byte compiler and use that to test my VM. I was forced to take break from that effort and implement the garbage collector because I kept using too much memory! Implementing the garbage collector was a much bigger rabbit hole than I expected. Hopefully this will help move the community forward on the quest for a Rust GC.
 
 ****  Have a comment?
-Join the [[https://discu.eu/?q=https%3A%2F%2Fcoredumped.dev%2F2022%2F04%2F11%2Fimplementing-a-safe-garbage-collector-in-rust%2F&submit_title=Implementing%20a%20safe%20garbage%20collector%20in%20Rust%20%E2%80%A2%20Core%20Dumped][discussion]], send me an [[mailto:troy.hinckley@dabrev.com][email]], or open an [[https://github.com/CeleritasCelery/rune/issues/new][issue]].
+Join the discussion on [[https://hn.algolia.com/?dateRange=all&page=0&prefix=false&query=https%3A%2F%2Fcoredumped.dev%2F2022%2F04%2F11%2Fimplementing-a-safe-garbage-collector-in-rust%2F&sort=byPopularity&type=story][HN]], [[https://lobste.rs/search?q=https%3A%2F%2Fcoredumped.dev%2F2022%2F04%2F11%2Fimplementing-a-safe-garbage-collector-in-rust%2F&what=stories&order=newest][Lobsters]], [[https://www.reddit.com/search/?q=url%3Acoredumped.dev%2F2022%2F04%2F11%2Fimplementing-a-safe-garbage-collector-in-rust%2F&sort=top][Reddit]], send me an [[mailto:troy.hinckley@dabrev.com][email]], or open an [[https://github.com/CeleritasCelery/rune/issues/new][issue]].
 
 [fn:5] Why is reference counting slower then garbage collection? There is a lot that goes into it, but it boils down to two main issues:
 1. Every time you copy a ~Rc~ pointer you need to update the reference count. This involves reading the memory, updating the count, and writing it back. Compare that to an "normal" pointer copy where you don't need to even /access/ the memory at all. GC's do have to trace the memory eventually, but this overhead can be moved to a time when it will have less impact (or even moved to another thread). RC overhead needs to happen real time, and happens /every time/.
@@ -1031,7 +1031,7 @@ As with everything in engineering, concurrency comes with trade-offs. Implementi
 
 Anyways, I would love to get some feedback on the ideas presented. Are there obvious holes that I missed? Would this scheme be useful? Do you know way that these could be implemented (or would not be possible to implement)? How does this compare to other dynamic languages? Do you prefer the more "thread-like" or "green-thread-like" approach? Is there a way to address some of the problems presented above?
 **** Have a comment?
-Join the [[https://discu.eu/?q=https%3A%2F%2Fcoredumped.dev%2F2022%2F05%2F19%2Fa-vision-of-a-multi-threaded-emacs%2F&submit_title=A%20vision%20of%20a%20multi-threaded%20Emacs%20%E2%80%A2%20Core%20Dumped][discussion]] or send me an [[mailto:troy.hinckley@dabrev.com][email]]
+Join the discussion on [[https://hn.algolia.com/?dateRange=all&page=0&prefix=false&query=https%3A%2F%2Fcoredumped.dev%2F2022%2F05%2F19%2Fa-vision-of-a-multi-threaded-emacs%2F&sort=byPopularity&type=story][HN]], [[https://lobste.rs/search?q=https%3A%2F%2Fcoredumped.dev%2F2022%2F05%2F19%2Fa-vision-of-a-multi-threaded-emacs%2F&what=stories&order=newest][Lobsters]], [[https://www.reddit.com/search/?q=url%3Acoredumped.dev%2F2022%2F05%2F19%2Fa-vision-of-a-multi-threaded-emacs%2F&sort=top][Reddit]], or send me an [[mailto:troy.hinckley@dabrev.com][email]]
 
 [fn:1] Similar to what is being attempted for python [[https://github.com/colesbury/nogil][here]] and [[https://github.com/larryhastings/gilectoy][here]].
 
@@ -1135,7 +1135,7 @@ There is also a big need for testing. My code has unit tests, but the true spec 
 This project is still far from complete or useful. It's truly a love letter to Emacs and has been an amazing learning experience. There have been a lot of design challenges trying to do things in a memory-safe and multi-threaded way. I created a [[https://github.com/CeleritasCelery/rune/blob/master/details.org][design doc]] that contains a bunch of loosely structured thoughts on ways different things could be implemented. I also created a bunch of [[https://github.com/CeleritasCelery/rune/issues?q=is%3Aopen+is%3Aissue+label%3A%22design+needed%22][issues]] in the issue tracker with the label: *Design Needed*. This is where I have put some ideas about how to handle things from [[https://github.com/CeleritasCelery/rune/issues/21][multi-threading]] and [[https://github.com/CeleritasCelery/rune/issues/14][string representation]] to [[https://github.com/CeleritasCelery/rune/issues/19][regex]] and [[https://github.com/CeleritasCelery/rune/issues/17][buffer data structures]]. If you have an eye for design or just want to add your thoughts, go ahead and submit a comment or new issue.
 
 **** Have a comment?
-Join the [[https://discu.eu/?q=https%3A%2F%2Fcoredumped.dev%2F2023%2F01%2F17%2Fdesign-of-emacs-in-rust%2F%23fnref%3A3&submit_title=Design%20of%20Emacs%20in%20Rust%20%E2%80%A2%20Core%20Dumped][discussion]] or send me an [[mailto:troy.hinckley@dabrev.com][email]]
+Join the discussion on [[https://hn.algolia.com/?dateRange=all&page=0&prefix=false&query=https%3A%2F%2Fcoredumped.dev%2F2023%2F01%2F17%2Fdesign-of-emacs-in-rust%2F&sort=byPopularity&type=story][HN]], [[https://lobste.rs/search?q=https%3A%2F%2Fcoredumped.dev%2F2023%2F01%2F17%2Fdesign-of-emacs-in-rust%2F&what=stories&order=newest][Lobsters]], [[https://www.reddit.com/search/?q=url%3Acoredumped.dev%2F2023%2F01%2F17%2Fdesign-of-emacs-in-rust%2F&sort=top][Reddit]], or send me an [[mailto:troy.hinckley@dabrev.com][email]]
 
 [fn:1] This would not have been possible without Rocky Bernstein's amazing resource; [[http://rocky.github.io/elisp-bytecode.pdf][Bytecode Reference Manual]].
 
@@ -1286,7 +1286,7 @@ Ropes have [[https://github.com/emacs-ng/emacs-ng/issues/378#issuecomment-907680
 Despite all that, gap buffers showed they can do quite well when placed against more "advanced" data structures. One of their key advantages is that gap buffers are always in an ideal state. They never need to worry about fragmentation or being unbalanced like trees do. The way I see it, gap buffers are better for searching and memory usage, but ropes are better at non-local editing patterns. Despite their simplicity, gap buffers can hold their own in the modern world. Maybe Emacs was on to something.
 
 **** Have a comment?
-Join the [[https://discu.eu/?q=https%3A%2F%2Fcoredumped.dev%2F2023%2F08%2F09%2Ftext-showdown-gap-buffers-vs-ropes%2F&submit_title=Text%20showdown%3A%20Gap%20Buffers%20vs%20Ropes%20%E2%80%A2%20Core%20Dumped][discussion]] or send me an [[mailto:troy.hinckley@dabrev.com][email]]. Benchmarks can be found [[https://github.com/CeleritasCelery/rope-benches][here]].
+Join the discussion on [[https://hn.algolia.com/?dateRange=all&page=0&prefix=false&query=https%3A%2F%2Fcoredumped.dev%2F2023%2F08%2F09%2Ftext-showdown-gap-buffers-vs-ropes%2F&sort=byPopularity&type=story][HN]], [[https://lobste.rs/search?q=https%3A%2F%2Fcoredumped.dev%2F2023%2F08%2F09%2Ftext-showdown-gap-buffers-vs-ropes%2F&what=stories&order=newest][Lobsters]], [[https://www.reddit.com/search/?q=url%3Acoredumped.dev%2F2023%2F08%2F09%2Ftext-showdown-gap-buffers-vs-ropes%2F&sort=top][Reddit]], or send me an [[mailto:troy.hinckley@dabrev.com][email]]. Benchmarks can be found [[https://github.com/CeleritasCelery/rope-benches][here]].
 
 [fn:1] GB here means 2^30, as it should when [[https://www.merriam-webster.com/dictionary/kilobyte][talking about base-2 memory]]. The only people who think it should be 10^9 are hard drive salesmen and the type of people who [[https://www.theguardian.com/commentisfree/2015/feb/05/why-wikipedias-grammar-vigilante-is-wrong][spend years pointlessly changing peoples grammar on wikipedia]]. Also "gibibyte" sounds like Pokémon invented by a first grader.
 
@@ -1406,7 +1406,7 @@ This will throw the error "Apparently circular structure being printed". You can
 I think this is a clever solution! It combines the speed and simplicity of Brent's algorithm with the DFS. Since most structures in lisp tend to be "longer" than they are "deep" this is a good trade-off. I decided to write about this because I could not find this particular solution on the Internet and most of the things I did find were very high-level and generic. I like this solution as a combination of engineering and science.
 
 **** Have a comment?
-Join the [[https://discu.eu/?q=https%3A%2F%2Fcoredumped.dev%2F2024%2F02%2F23%2Fcycles-all-way-down%2F&submit_title=Cycles%20all%20way%20down%20%E2%80%A2%20Core%20Dumped][discussion]] or send me an [[mailto:troy.hinckley@dabrev.com][email]].
+Join the discussion on [[https://hn.algolia.com/?dateRange=all&page=0&prefix=false&query=https%3A%2F%2Fcoredumped.dev%2F2024%2F02%2F23%2Fcycles-all-way-down%2F&sort=byPopularity&type=story][HN]], [[https://lobste.rs/search?q=https%3A%2F%2Fcoredumped.dev%2F2024%2F02%2F23%2Fcycles-all-way-down%2F&what=stories&order=newest][Lobsters]], [[https://www.reddit.com/search/?q=url%3Acoredumped.dev%2F2024%2F02%2F23%2Fcycles-all-way-down%2F&sort=top][Reddit]], or send me an [[mailto:troy.hinckley@dabrev.com][email]].
 
 [fn:1] I was sure there had to be another way so I asked on StackOverflow, where my question was closed as a duplicate of another question that was also closed (got to love StackOverflow!).
 
@@ -1611,7 +1611,7 @@ It is really hard to benchmark allocation in a vacuum because so much of the per
 You can find the benchmarks used in this article [[https://github.com/CeleritasCelery/benchmark_bump_up_down][here]].
 
 **** Have a comment?
-Join the [[https://discu.eu/?q=https%3A%2F%2Fcoredumped.dev%2F2024%2F03%2F25%2Fbump-allocation-up-or-down%2F&submit_title=Bump%20Allocation%3A%20Up%20or%20Down%3F%20%E2%80%A2%20Core%20Dumped][discussion]] or send me an [[mailto:troy.hinckley@dabrev.com][email]].
+Join the discussion on [[https://hn.algolia.com/?dateRange=all&page=0&prefix=false&query=https%3A%2F%2Fcoredumped.dev%2F2024%2F03%2F25%2Fbump-allocation-up-or-down%2F&sort=byPopularity&type=story][HN]], [[https://lobste.rs/search?q=https%3A%2F%2Fcoredumped.dev%2F2024%2F03%2F25%2Fbump-allocation-up-or-down%2F&what=stories&order=newest][Lobsters]], [[https://www.reddit.com/search/?q=url%3Acoredumped.dev%2F2024%2F03%2F25%2Fbump-allocation-up-or-down%2F&sort=top][Reddit]], or send me an [[mailto:troy.hinckley@dabrev.com][email]].
 ** DONE [#B] What is the best pointer tagging method? :data_structures:
 :PROPERTIES:
 :EXPORT_DATE: 2024-09-09
@@ -1755,7 +1755,7 @@ Either way, this was a fun exploration into how compilers and ISA can have an im
 **** Have a comment?
 Benchmarks can be found [[https://github.com/CeleritasCelery/pointer_tagging_benchmarks][here]].
 
-Join the [[https://discu.eu/?q=https%3A%2F%2Fcoredumped.dev%2F2024%2F09%2F09%2Fwhat-is-the-best-pointer-tagging-method%2F&submit_title=What%20is%20the%20best%20pointer%20tagging%20method%3F%20%E2%80%A2%20Core%20Dumped][discussion]] or send me an [[mailto:troy@troyhinckley.com][email]].
+Join the discussion on [[https://hn.algolia.com/?dateRange=all&page=0&prefix=false&query=https%3A%2F%2Fcoredumped.dev%2F2024%2F09%2F09%2Fwhat-is-the-best-pointer-tagging-method%2F&sort=byPopularity&type=story][HN]], [[https://lobste.rs/search?q=https%3A%2F%2Fcoredumped.dev%2F2024%2F09%2F09%2Fwhat-is-the-best-pointer-tagging-method%2F&what=stories&order=newest][Lobsters]], [[https://www.reddit.com/search/?q=url%3Acoredumped.dev%2F2024%2F09%2F09%2Fwhat-is-the-best-pointer-tagging-method%2F&sort=top][Reddit]], or send me an [[mailto:troy@troyhinckley.com][email]].
 
 [fn:1] I say unused, but not necessarily zero. On Linux in particular the top bytes are 1 if the pointer is in kernel space.
 
@@ -1924,6 +1924,9 @@ I can then use it to cache things I don't want TRAMP to be looking up all the ti
 
 *** Future work
 All this work has made TRAMP quite usable for me. There are still things that are slow, but almost nothing that just doesn't work. For most of the work I do I hardly notice that I am working over a remote protocol. However, in writing all this, I kept thinking to myself "There has to be a better way to do this". I have started to think of ways to fundamentally improve the performance of TRAMP that would involve changes to the package itself. I plan to write more on that soon, so stay tuned!
+
+**** Have a comment?
+Join the discussion on [[https://hn.algolia.com/?dateRange=all&page=0&prefix=false&query=https%3A%2F%2Fcoredumped.dev%2F2025%2F06%2F18%2Fmaking-tramp-go-brrrr.%2F&sort=byPopularity&type=story][HN]], [[https://lobste.rs/search?q=https%3A%2F%2Fcoredumped.dev%2F2025%2F06%2F18%2Fmaking-tramp-go-brrrr.%2F&what=stories&order=newest][Lobsters]], [[https://www.reddit.com/search/?q=url%3Acoredumped.dev%2F2025%2F06%2F18%2Fmaking-tramp-go-brrrr.%2F&sort=top][Reddit]], or send me an [[mailto:troy@troyhinckley.com][email]].
 
 ** TODO A future TRAMP
 

@@ -124,6 +124,6 @@ I think this is a clever solution! It combines the speed and simplicity of Brent
 
 ### Have a comment? {#have-a-comment}
 
-Join the [discussion](https://discu.eu/?q=https%3A%2F%2Fcoredumped.dev%2F2024%2F02%2F23%2Fcycles-all-way-down%2F&submit_title=Cycles%20all%20way%20down%20%E2%80%A2%20Core%20Dumped) or send me an [email](mailto:troy.hinckley@dabrev.com).
+Join the discussion on [HN](https://hn.algolia.com/?dateRange=all&page=0&prefix=false&query=https%3A%2F%2Fcoredumped.dev%2F2024%2F02%2F23%2Fcycles-all-way-down%2F&sort=byPopularity&type=story), [Lobsters](https://lobste.rs/search?q=https%3A%2F%2Fcoredumped.dev%2F2024%2F02%2F23%2Fcycles-all-way-down%2F&what=stories&order=newest), [Reddit](https://www.reddit.com/search/?q=url%3Acoredumped.dev%2F2024%2F02%2F23%2Fcycles-all-way-down%2F&sort=top), or send me an [email](mailto:troy.hinckley@dabrev.com).
 
 [^fn:1]: I was sure there had to be another way so I asked on StackOverflow, where my question was closed as a duplicate of another question that was also closed (got to love StackOverflow!).

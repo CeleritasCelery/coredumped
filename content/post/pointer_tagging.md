@@ -184,7 +184,7 @@ Either way, this was a fun exploration into how compilers and ISA can have an im
 
 Benchmarks can be found [here](https://github.com/CeleritasCelery/pointer_tagging_benchmarks).
 
-Join the [discussion](https://discu.eu/?q=https%3A%2F%2Fcoredumped.dev%2F2024%2F09%2F09%2Fwhat-is-the-best-pointer-tagging-method%2F&submit_title=What%20is%20the%20best%20pointer%20tagging%20method%3F%20%E2%80%A2%20Core%20Dumped) or send me an [email](mailto:troy@troyhinckley.com).
+Join the discussion on [HN](https://hn.algolia.com/?dateRange=all&page=0&prefix=false&query=https%3A%2F%2Fcoredumped.dev%2F2024%2F09%2F09%2Fwhat-is-the-best-pointer-tagging-method%2F&sort=byPopularity&type=story), [Lobsters](https://lobste.rs/search?q=https%3A%2F%2Fcoredumped.dev%2F2024%2F09%2F09%2Fwhat-is-the-best-pointer-tagging-method%2F&what=stories&order=newest), [Reddit](https://www.reddit.com/search/?q=url%3Acoredumped.dev%2F2024%2F09%2F09%2Fwhat-is-the-best-pointer-tagging-method%2F&sort=top), or send me an [email](mailto:troy@troyhinckley.com).
 
 [^fn:1]: I say unused, but not necessarily zero. On Linux in particular the top bytes are 1 if the pointer is in kernel space.
 [^fn:2]: An LLVM contributor pointed me to [this](https://godbolt.org/z/TKoq4WKve) modified version of the code where LLVM will do the optimization we want. The key change is subtracting 1 instead of `tag`. Even though we "know" that the tag is 1 inside the `if` statement, compilers sometimes struggle with control flow-dependent facts.
