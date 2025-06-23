@@ -41,7 +41,7 @@ I also found that using `rsync` as your method makes updating an existing file (
 
 ## Use Direct Async {#use-direct-async}
 
-When creating a new process in Emacs, you have two options: synchronous or asynchronous. Async processes have historically been really slow over TRAMP, because it has to create a new connection for every async process. However recent version of TRAMP have added a feature called [direct async process](https://www.gnu.org/software/TRAMP/#Improving-performance-of-asynchronous-remote-processes-1) that makes this significantly faster. This feature alone will take many packages (like magit or git-gutter) from completely unusable to bearable over TRAMP. Here is how you configure it with TRAMP `2.7`.
+When creating a new process in Emacs, you have two options: synchronous or asynchronous. Async processes have historically been really slow over TRAMP, because it has to create a new connection for every async process. However recent version of TRAMP have added a feature called [direct async process](https://www.gnu.org/software/tramp/#Improving-performance-of-asynchronous-remote-processes-1) that makes this significantly faster. This feature alone will take many packages (like magit or git-gutter) from completely unusable to bearable over TRAMP. Here is how you configure it with TRAMP `2.7`.
 
 ```emacs-lisp
 (connection-local-set-profile-variables
@@ -60,7 +60,7 @@ We have to add that extra setting to get magit to work. See [this issue](https:/
 
 ## Fix remote compile {#fix-remote-compile}
 
-Newer versions of TRAMP will use [SSH connection sharing](https://www.gnu.org/software/TRAMP/#Using-ssh-connection-sharing-1) for much faster connections. These don't require you to reenter your password each time you connect. The `compile` command disables this feature, so we want to turn it back on.
+Newer versions of TRAMP will use [SSH connection sharing](https://www.gnu.org/software/tramp/#Using-ssh-connection-sharing-1) for much faster connections. These don't require you to reenter your password each time you connect. The `compile` command disables this feature, so we want to turn it back on.
 
 ```emacs-lisp
 (with-eval-after-load 'tramp
