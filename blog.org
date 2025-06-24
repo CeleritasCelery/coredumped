@@ -1773,7 +1773,7 @@ TRAMP really is an amazing piece of technology. It supports a huge number of pro
 But TRAMP unfortunately has a propensity for being slow. Sometimes this is not TRAMPs fault and comes from how it is used. In my testing, each call through TRAMP takes about 50-100ms. Compare that to a normal external process call in Emacs which would take around 1 ms. Workflows that work fine on a local machine become unbearable when working remotely. However, this doesn't mean that TRAMP has to be slow. If you run ~emacs -Q~ and use TRAMP you will normally find it quite snappy.
 
 *** Getting started
-First, let's set up some of the basic settings. These settings below will prevent TRAMP from creating a bunch of extra files and use scp directly when moving files.
+First, let's set up some of the basic settings. Tramp already [[https://www.gnu.org/software/tramp/#Frequently-Asked-Questions-1][has a section]] on how to improve performance, so I am not going to reiterate those suggestions here. But these additional settings will prevent TRAMP from creating a bunch of extra files and use scp directly when moving files.
 
 #+begin_src emacs-lisp
   (setq remote-file-name-inhibit-locks t

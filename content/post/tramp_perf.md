@@ -17,7 +17,7 @@ But TRAMP unfortunately has a propensity for being slow. Sometimes this is not T
 
 ## Getting started {#getting-started}
 
-First, let's set up some of the basic settings. These settings below will prevent TRAMP from creating a bunch of extra files and use scp directly when moving files.
+First, let's set up some of the basic settings. Tramp already [has a section](https://www.gnu.org/software/tramp/#Frequently-Asked-Questions-1) on how to improve performance, so I am not going to reiterate those suggestions here. But these additional settings will prevent TRAMP from creating a bunch of extra files and use scp directly when moving files.
 
 ```emacs-lisp
 (setq remote-file-name-inhibit-locks t
