@@ -1837,15 +1837,6 @@ So here is my advice for working with magit over TRAMP.
 
 
 #+begin_src emacs-lisp
-  (defun $magit-auto-revert-not-remote (orig-fun &rest args)
-    (unless (and buffer-file-name (file-remote-p buffer-file-name))
-      (apply orig-fun args)))
-
-  ;; Don't auto-revert remote files
-  (advice-add 'magit-turn-on-auto-revert-mode-if-desired
-              :around
-              #'$magit-auto-revert-not-remote)
-
   ;; don't show the diff by default in the commit buffer. Use `C-c C-d' to display it
   (setq magit-commit-show-diff nil)
   ;; don't show git variables in magit branch
