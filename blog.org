@@ -1792,7 +1792,7 @@ You can see in the graph above that inline is faster all the way up until about 
         tramp-verbose 2)
 #+end_src
 
-I also found that using ~rsync~ as your method makes updating an existing file (i.e. making a small change to a file and saving it) about 3-4 times faster than using ~scp~.  I don't use ~rsync~ though because it breaks remote shells.
+I also found that using ~rsync~ as your method makes updating an existing file (i.e. making a small change to a file and saving it) about 3-4 times faster than using ~scp~.  +I don't use ~rsync~ though because it breaks remote shells.+ Edit: This is going to be [[https://lists.gnu.org/r/tramp-devel/2025-06/msg00001.html][fixed in Emacs 30.2]].
 *** Use Direct Async
 When creating a new process in Emacs, you have two options: synchronous or asynchronous. Async processes have historically been really slow over TRAMP, because it has to create a new connection for every async process. However recent version of TRAMP have added a feature called [[https://www.gnu.org/software/tramp/#Improving-performance-of-asynchronous-remote-processes-1][direct async process]] that makes this significantly faster. This feature alone will take many packages (like magit or git-gutter) from completely unusable to bearable over TRAMP. Here is how you configure it with TRAMP ~2.7~.
 #+begin_src emacs-lisp

@@ -36,7 +36,7 @@ You can see in the graph above that inline is faster all the way up until about 
       tramp-verbose 2)
 ```
 
-I also found that using `rsync` as your method makes updating an existing file (i.e. making a small change to a file and saving it) about 3-4 times faster than using `scp`.  I don't use `rsync` though because it breaks remote shells.
+I also found that using `rsync` as your method makes updating an existing file (i.e. making a small change to a file and saving it) about 3-4 times faster than using `scp`.  ~~I don't use `rsync` though because it breaks remote shells.~~ Edit: This is going to be [fixed in Emacs 30.2](https://lists.gnu.org/r/tramp-devel/2025-06/msg00001.html).
 
 
 ## Use Direct Async {#use-direct-async}
