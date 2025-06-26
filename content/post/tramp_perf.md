@@ -55,7 +55,7 @@ When creating a new process in Emacs, you have two options: synchronous or async
 (setq magit-tramp-pipe-stty-settings 'pty)
 ```
 
-We have to add that extra setting to get magit to work. See [this issue](https://github.com/magit/magit/issues/5220) for more details. You can double check that this mode is working by calling `M-: (tramp-direct-async-process-p)` on a remote file.
+We have to add that extra setting to get magit to work. See [this issue](https://github.com/magit/magit/issues/5220) for more details. Note that if you work with DOS line endings in git, then magit over pty [might not work.](https://github.com/magit/magit/issues/20) You can double check that this mode is working by calling `M-: (tramp-direct-async-process-p)` on a remote file.
 
 
 ## Fix remote compile {#fix-remote-compile}

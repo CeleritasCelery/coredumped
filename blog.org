@@ -1807,7 +1807,7 @@ When creating a new process in Emacs, you have two options: synchronous or async
   (setq magit-tramp-pipe-stty-settings 'pty)
 #+end_src
 
-We have to add that extra setting to get magit to work. See [[https://github.com/magit/magit/issues/5220][this issue]] for more details. You can double check that this mode is working by calling ~M-: (tramp-direct-async-process-p)~ on a remote file.
+We have to add that extra setting to get magit to work. See [[https://github.com/magit/magit/issues/5220][this issue]] for more details. Note that if you work with DOS line endings in git, then magit over pty [[https://github.com/magit/magit/issues/20][might not work.]] You can double check that this mode is working by calling ~M-: (tramp-direct-async-process-p)~ on a remote file.
 
 *** Fix remote compile
 Newer versions of TRAMP will use [[https://www.gnu.org/software/tramp/#Using-ssh-connection-sharing-1][SSH connection sharing]] for much faster connections. These don't require you to reenter your password each time you connect. The ~compile~ command disables this feature, so we want to turn it back on.
