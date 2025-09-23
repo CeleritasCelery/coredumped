@@ -1921,7 +1921,10 @@ Join the discussion on [[https://hn.algolia.com/?dateRange=all&page=0&prefix=fal
 
 ** TODO A future TRAMP
 
+I love the freedom and power that EMACS tramp gives me. I love that I can, for the most part, treat the remote file system exactly like a local file system. I can add so many different types of servers that I can run the version of EMACS that I want on my local computer and upwork on remote files. However, as I've made the workflow switch to tramp, as I detailed in my last blog post, there are some areas where EMACS tramp is just low. And there's not much, or it's really hard to get around that. So in this post, I want to detail kind of a future vision for some supporting architecture that could help make tramp live up to its potential. To be as fast as it can possibly be and make the remote development experience as seamless as possible, which is a really big scope. My purpose in doing this proposal is to get feedback on this idea.
 *** what is the tramp bottleneck
+In order to deal with the speed of Tramp, we need to determine what parts of it are slow or where the real bottlenecks are. In the belt process, I present a few use cases below and some analysis where time is being spent in different Tramp calls.
+
 - Emacs is quite fast on a the local file system
 - calls over tramp are slow and add up fast
 
@@ -1936,9 +1939,14 @@ I want to make it clear that I am making a load bearing assumption here; calls t
 That is the idea. we will have two processes that run one on the same machine as Emacs, and one that runs on the remote host. The remote process is basically a file watcher that keeps the client up to date about the state of the remote filesystem. it only scans directories that we have already visited with tramp. it will feed this info back to the client process so that it can build a cache of what the remote filesystem looks like. Now we connect tramp so that it always talks through our local client instead of the remote directly. if the information being requested is already there, we just return it. This becomes almost as fast as a call on the native filesystem. If the data is not cached, we request it from the remote process. But remember that the remote process is always scanning the directories we are working in, so most of the time the info will be cached.
 
 **** what about magit?
+All this was going to help with file system operations, but what about something like magic? Which is mostly running git. While magic would certainly benefit from some e-list level caching, we could also implement some caching of our own for git operations that we know are not going to change. Like if we call the same git operation over and over and over again, we can just cache the result, but that requires having some git aware knowledge.
 
+*** Can we just do this in elisp?
+Can we just make these changes we want as an Emacs list package and call it a day? There's a couple things that make that difficult. For one, E-list is single-threaded. And so anytime we're going to call a tramp operation, we need to wait for the results of it before we can continue. And there's a lot of latency that could add up waiting for all those tramp operations to happen. Two is that the latency over tramp is really expensive. So, and there's nothing we can do on the E-list side to fix that. You can see from the data above that even if we got the Emacs overhead down to zero, we'd still have a significantly higher overhead for tramp compared with native file system. So we need to use a new solution.
 
-*** Can we just do this in elisp
+*** what does our model look like?
+
+There is another advantage to having a server process. And that is if we connect remote shells and programs to the server process, it can stay alive even when our network connection goes down. Because currently in Tramp, if you have open shells or connections and you have to disconnect from the internet or disconnect from your server, then all those connections get broken. And you have to reestablish them again from scratch next time you open a new Tramp connection. But if you have a persistent server over there, we can just keep that server connection opened and reconnect to it. It is basically like T-Mux, but for E-Max. And so we can keep our shells, we can keep our LSP sessions persistent as long as we want to without any issues.
 
 *** What language should we use?
 so what language do we want to use for this?
@@ -1967,4 +1975,6 @@ Given all that, I want to use something that can be compiled to a static executa
 
 One other thing to consider is that even though I plan to have these as separate executables, it might be advantageous in the future to integrate the client program directly with Emacs as a module. The only languages that currently support this are C/C++ and Rust. Of the two, I would much rather use Rust.
 
-I don't have any code for this yet. I am just looking for feedback on my analysis of the problem and the if the proposed solution would be a good one.
+*** Show me the code
+
+So, where is the code? The thing is, I don't have any code written for this yet. The whole purpose of this is to gather feedback on the ideas presented here, on if we're solving the right problems, if this is the right solution, if the trade-offs that I have enumerated here are the right ones. I'm hoping the sort of feedback that I'll get will be like, "Hey, did you know about existing library that already does this?" Or, "Have you ever thought about doing it this way?" Or, "There's a big problem in how you're planning to approach this," etc., etc.
