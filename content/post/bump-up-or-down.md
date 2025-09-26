@@ -233,4 +233,4 @@ You can find the benchmarks used in this article [here](https://github.com/Celer
 
 ### Have a comment? {#have-a-comment}
 
-Join the discussion on [HN](https://hn.algolia.com/?dateRange=all&page=0&prefix=false&query=https%3A%2F%2Fcoredumped.dev%2F2024%2F03%2F25%2Fbump-allocation-up-or-down%2F&sort=byPopularity&type=story), [Lobsters](https://lobste.rs/search?q=https%3A%2F%2Fcoredumped.dev%2F2024%2F03%2F25%2Fbump-allocation-up-or-down%2F&what=stories&order=newest), [Reddit](https://www.reddit.com/search/?q=url%3Acoredumped.dev%2F2024%2F03%2F25%2Fbump-allocation-up-or-down%2F&sort=top), or send me an [email](mailto:troy.hinckley@dabrev.com).
+[Join the discussion](https://show-n.tel/?q=https%3A%2F%2Fcoredumped.dev%2F2024%2F03%2F25%2Fbump-allocation-up-or-down%2F) or send me an [email](mailto:troy.hinckley@dabrev.com).

@@ -186,4 +186,4 @@ All this work has made TRAMP quite usable for me. There are still things that ar
 
 ### Have a comment? {#have-a-comment}
 
-Join the discussion on [HN](https://hn.algolia.com/?dateRange=all&page=0&prefix=false&query=https%3A%2F%2Fcoredumped.dev%2F2025%2F06%2F18%2Fmaking-tramp-go-brrrr.%2F&sort=byPopularity&type=story), [Lobsters](https://lobste.rs/search?q=https%3A%2F%2Fcoredumped.dev%2F2025%2F06%2F18%2Fmaking-tramp-go-brrrr.%2F&what=stories&order=newest), [Reddit](https://www.reddit.com/search/?q=url%3Acoredumped.dev%2F2025%2F06%2F18%2Fmaking-tramp-go-brrrr.%2F&sort=top), or send me an [email](mailto:troy@troyhinckley.com).
+[Join the discussion](https://show-n.tel/?q=https%3A%2F%2Fcoredumped.dev%2F2025%2F06%2F18%2Fmaking-tramp-go-brrrr.%2F) or send me an [email](mailto:troy@troyhinckley.com).
